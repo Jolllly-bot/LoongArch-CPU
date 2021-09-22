@@ -12,6 +12,8 @@ module mem_stage(
     //to ws
     output                         ms_to_ws_valid,
     output [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus  ,
+    //forward
+    output [`MS_FWD_BUS_WD   -1:0] ms_fwd_bus    ,
     //from data-sram
     input  [31                 :0] data_sram_rdata
 );
@@ -56,6 +58,12 @@ always @(posedge clk) begin
         es_to_ms_bus_r  <= es_to_ms_bus;
     end
 end
+
+//rf forward path
+assign ms_fwd_valid = ms_valid && ms_gr_we;
+assign ms_fwd_bus = {ms_fwd_valid,
+                     ms_dest
+                    };
 
 assign mem_result = data_sram_rdata;
 

@@ -9,6 +9,9 @@ module id_stage(
     //from fs
     input                          fs_to_ds_valid,
     input  [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus  ,
+    //from ms & es
+    input  [`ES_FWD_BUS_WD   -1:0] es_fwd_bus    ,
+    input  [`MS_FWD_BUS_WD   -1:0] ms_fwd_bus    ,
     //to es
     output                         ds_to_es_valid,
     output [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus  ,
@@ -121,7 +124,21 @@ assign ds_to_es_bus = {alu_op      ,  //149:138
                        ds_pc          //31 :0
                       };
 
-assign ds_ready_go    = 1'b1;
+//forward compare path
+wire       es_fwd_valid;
+wire [4:0] es_dest;
+wire       ms_fwd_valid;
+wire [4:0] ms_dest;
+wire       es_rf_eq;
+wire       ms_rf_eq;
+wire       wb_rf_eq;
+assign {es_fwd_valid, es_dest} = es_fwd_bus;
+assign {ms_fwd_valid, ms_dest} = ms_fwd_bus;
+assign es_rf_eq =  es_fwd_valid && (es_dest == rf_raddr1 || es_dest == rf_raddr2);
+assign ms_rf_eq =  ms_fwd_valid && (ms_dest == rf_raddr1 || ms_dest == rf_raddr2);
+assign wb_rf_eq =  rf_we && (rf_waddr == rf_raddr1 || rf_waddr == rf_raddr2);
+
+assign ds_ready_go    = !(es_rf_eq || ms_rf_eq || wb_rf_eq);
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
 assign ds_to_es_valid = ds_valid && ds_ready_go;
 always @(posedge clk) begin

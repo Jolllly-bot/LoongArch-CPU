@@ -12,6 +12,8 @@ module exe_stage(
     //to ms
     output                         es_to_ms_valid,
     output [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus  ,
+    //forward
+    output [`ES_FWD_BUS_WD   -1:0] es_fwd_bus    ,
     // data sram interface
     output        data_sram_en   ,
     output [ 3:0] data_sram_wen  ,
@@ -76,6 +78,12 @@ always @(posedge clk) begin
         ds_to_es_bus_r <= ds_to_es_bus;
     end
 end
+
+//rf forward path
+assign es_fwd_valid = es_valid && es_gr_we;
+assign es_fwd_bus = {es_fwd_valid,
+                     es_dest
+                    };
 
 assign es_alu_src1 = es_src1_is_pc  ? es_pc[31:0] : 
                                       es_rj_value;
