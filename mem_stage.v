@@ -43,6 +43,15 @@ assign ms_to_ws_bus = {ms_gr_we       ,  //69:69
                        ms_pc             //31:0
                       };
 
+//ms forward path
+wire ms_fwd_valid;
+
+assign ms_fwd_valid = ms_valid && ms_gr_we;
+assign ms_fwd_bus = {ms_fwd_valid   , //37:37
+                     ms_dest        , //36:32
+                     ms_final_result  //31:0
+                    };
+
 assign ms_ready_go    = 1'b1;
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
 assign ms_to_ws_valid = ms_valid && ms_ready_go;
@@ -58,12 +67,6 @@ always @(posedge clk) begin
         es_to_ms_bus_r  <= es_to_ms_bus;
     end
 end
-
-//rf forward path
-assign ms_fwd_valid = ms_valid && ms_gr_we;
-assign ms_fwd_bus = {ms_fwd_valid,
-                     ms_dest
-                    };
 
 assign mem_result = data_sram_rdata;
 

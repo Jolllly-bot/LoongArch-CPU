@@ -124,21 +124,31 @@ assign ds_to_es_bus = {alu_op      ,  //149:138
                        ds_pc          //31 :0
                       };
 
-//forward compare path
-wire       es_fwd_valid;
-wire [4:0] es_dest;
-wire       ms_fwd_valid;
-wire [4:0] ms_dest;
-wire       es_rf_eq;
-wire       ms_rf_eq;
-wire       wb_rf_eq;
-assign {es_fwd_valid, es_dest} = es_fwd_bus;
-assign {ms_fwd_valid, ms_dest} = ms_fwd_bus;
-assign es_rf_eq =  es_fwd_valid && (es_dest == rf_raddr1 || es_dest == rf_raddr2);
-assign ms_rf_eq =  ms_fwd_valid && (ms_dest == rf_raddr1 || ms_dest == rf_raddr2);
-assign wb_rf_eq =  rf_we && (rf_waddr == rf_raddr1 || rf_waddr == rf_raddr2);
+//forward
+wire        es_fwd_valid;
+wire [4:0]  es_dest;
+wire [31:0] es_data;
+wire        es_blk_valid;
+wire        ms_fwd_valid;
+wire [4:0]  ms_dest;
+wire [31:0] ms_data;
 
-assign ds_ready_go    = !(es_rf_eq || ms_rf_eq || wb_rf_eq);
+wire        es_rf_eq;
+wire        ms_rf_eq;
+wire        wb_rf_eq;
+
+assign {es_fwd_valid,
+        es_blk_valid,
+        es_dest     ,
+        es_data
+       } = es_fwd_bus;
+assign {ms_fwd_valid,
+        ms_dest     ,
+        ms_data     
+        } = ms_fwd_bus;
+
+
+assign ds_ready_go    = !(es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2));
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
 assign ds_to_es_valid = ds_valid && ds_ready_go;
 always @(posedge clk) begin
@@ -259,9 +269,15 @@ regfile u_regfile(
     .wdata  (rf_wdata )
     );
 
-
-assign rj_value  = rf_rdata1; 
-assign rkd_value = rf_rdata2;
+//mux
+assign rj_value  = es_fwd_valid && es_dest  == rf_raddr1 ? es_data
+                 : ms_fwd_valid && ms_dest  == rf_raddr1 ? ms_data
+                 : rf_we        && rf_waddr == rf_raddr1 ? rf_wdata
+                 : rf_rdata1; 
+assign rkd_value = es_fwd_valid && es_dest == rf_raddr2 ? es_data
+                 : ms_fwd_valid && ms_dest == rf_raddr2 ? ms_data
+                 : rf_we        && rf_waddr == rf_raddr2 ? rf_wdata
+                 : rf_rdata2;
 
 assign rj_eq_rd = (rj_value == rkd_value);
 assign br_taken = (   inst_beq  &&  rj_eq_rd

@@ -67,7 +67,7 @@ id_stage id_stage(
     //from fs
     .fs_to_ds_valid (fs_to_ds_valid ),
     .fs_to_ds_bus   (fs_to_ds_bus   ),
-    //from es & ms
+    //from es & ms: forward
     .es_fwd_bus     (es_fwd_bus     ),
     .ms_fwd_bus     (ms_fwd_bus     ),
     //to es

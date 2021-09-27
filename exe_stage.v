@@ -63,6 +63,18 @@ assign es_to_ms_bus = {es_res_from_mem,  //70:70
                        es_pc             //31:0
                       };
 
+//forward path
+wire es_fwd_valid;
+wire es_blk_valid;
+
+assign es_fwd_valid = es_valid && es_gr_we;
+assign es_blk_valid = es_valid && es_res_from_mem;
+assign es_fwd_bus = {es_fwd_valid ,  //38:38
+                     es_blk_valid ,   //37:37
+                     es_dest      ,  //36:32
+                     es_alu_result  //31:0
+                    };
+
 assign es_ready_go    = 1'b1;
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go;
@@ -79,11 +91,6 @@ always @(posedge clk) begin
     end
 end
 
-//rf forward path
-assign es_fwd_valid = es_valid && es_gr_we;
-assign es_fwd_bus = {es_fwd_valid,
-                     es_dest
-                    };
 
 assign es_alu_src1 = es_src1_is_pc  ? es_pc[31:0] : 
                                       es_rj_value;
