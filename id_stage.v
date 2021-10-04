@@ -124,7 +124,8 @@ wire div_mod;
 wire        need_ui5;
 wire        need_si12;
 wire        need_si16;
-wire        need_si20;
+wire        need_si20_lu12i;
+wire        need_si20_pcaddu12i;
 wire        need_si26;  
 wire        src2_is_4;
 
@@ -279,7 +280,8 @@ assign alu_op[11] = inst_lu12i_w;
 assign need_ui5   =  inst_slli_w | inst_srli_w | inst_srai_w;
 assign need_si12  =  inst_addi_w | inst_ld_w | inst_st_w;
 assign need_si16  =  inst_jirl | inst_beq | inst_bne;
-assign need_si20  =  inst_lu12i_w;
+assign need_si20_lu12i  =  inst_lu12i_w;
+assign need_si20_pcaddu12i = inst_pcaddu12i;
 assign need_si26  =  inst_b | inst_bl;
 assign src2_is_4  =  inst_jirl | inst_bl;
 

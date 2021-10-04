@@ -28,10 +28,12 @@ reg  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus_r;
 wire [11:0] es_alu_op     ;
 wire        es_src1_is_pc ;
 wire        es_src2_is_imm; 
+wire        es_src2_is_zimm; 
 wire        es_gr_we      ;
 wire        es_mem_we     ;
 wire [ 4:0] es_dest       ;
 wire [31:0] es_imm        ;
+wire [31:0] es_zimm       ;
 wire [31:0] es_rj_value   ;
 wire [31:0] es_rkd_value  ;
 wire [31:0] es_pc         ;
@@ -147,8 +149,11 @@ assign es_result = (es_mul_signed && es_mul_high)  ? signed_prod[63:32] :
 assign es_alu_src1 = es_src1_is_pc  ? es_pc[31:0] : 
                                       es_rj_value;
                                       
-assign es_alu_src2 = es_src2_is_imm ? es_imm : 
+assign es_alu_src2 = es_src2_is_zimm ? es_zimm : 
+                     es_src2_is_imm ? es_imm : 
                                       es_rkd_value;
+
+assign es_zimm = {20'b0,es_imm[11:0]};
 
 alu u_alu(
     .alu_op     (es_alu_op    ),
