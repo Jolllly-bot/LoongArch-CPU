@@ -128,6 +128,7 @@ wire        need_si20_lu12i;
 wire        need_si20_pcaddu12i;
 wire        need_si26;  
 wire        src2_is_4;
+wire        need_ui12;
 
 wire [ 4:0] rf_raddr1;
 wire [31:0] rf_rdata1;
@@ -138,13 +139,12 @@ wire        rj_eq_rd;
 
 assign br_bus       = {br_taken,br_target};
 
-assign ds_to_es_bus = {mul_signed,
+assign ds_to_es_bus = {mul_signed  ,
                        mul_unsigned,
-                       mul_high,
-                       div_signed,
+                       mul_high    ,
+                       div_signed  ,
                        div_unsigned,
-                       div_mod,
-                       src2_is_zimm,  //150:150
+                       div_mod     ,
                        alu_op      ,  //149:138
                        res_from_mem,  //137:137
                        src1_is_pc  ,  //136:136
@@ -241,30 +241,30 @@ assign inst_beq    = op_31_26_d[6'h16];
 assign inst_bne    = op_31_26_d[6'h17];
 assign inst_lu12i_w= op_31_26_d[6'h05] & ~ds_inst[25];
 
-assign inst_slti = op_31_26_d[6'h00] & op_25_22_d[4'h8];
+assign inst_slti  = op_31_26_d[6'h00] & op_25_22_d[4'h8];
 assign inst_sltui = op_31_26_d[6'h00] & op_25_22_d[4'h9];
-assign inst_andi = op_31_26_d[6'h00] & op_25_22_d[4'hd];
-assign inst_ori = op_31_26_d[6'h00] & op_25_22_d[4'he];
-assign inst_xori = op_31_26_d[6'h00] & op_25_22_d[4'hf];
+assign inst_andi  = op_31_26_d[6'h00] & op_25_22_d[4'hd];
+assign inst_ori   = op_31_26_d[6'h00] & op_25_22_d[4'he];
+assign inst_xori  = op_31_26_d[6'h00] & op_25_22_d[4'hf];
 assign inst_sll_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h0e];
 assign inst_srl_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h0f];
 assign inst_sra_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h10];
-assign inst_pcaddu12i= op_31_26_d[6'h07] & ~ds_inst[25];
+assign inst_pcaddu12i = op_31_26_d[6'h07] & ~ds_inst[25];
 
-assign inst_mul_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h18];
-assign inst_mulh_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h19];
+assign inst_mul_w   = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h18];
+assign inst_mulh_w  = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h19];
 assign inst_mulh_wu = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h1] & op_19_15_d[5'h1a];
-assign inst_div_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h00];
-assign inst_mod_w = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h01];
-assign inst_div_wu = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h02];
-assign inst_mod_wu = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h03];
+assign inst_div_w   = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h00];
+assign inst_mod_w   = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h01];
+assign inst_div_wu  = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h02];
+assign inst_mod_wu  = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h03];
 
-assign mul_signed = inst_mul_w | inst_mulh_w;
+assign mul_signed   = inst_mul_w  | inst_mulh_w;
 assign mul_unsigned = inst_mulh_wu;
-assign mul_high = inst_mulh_w | inst_mulh_wu;
-assign div_signed = inst_div_w | inst_mod_w;
+assign mul_high     = inst_mulh_w | inst_mulh_wu;
+assign div_signed   = inst_div_w  | inst_mod_w;
 assign div_unsigned = inst_div_wu | inst_mod_wu;
-assign div_mod = inst_div_w | inst_div_wu;
+assign div_mod      = inst_div_w  | inst_div_wu;
 
 assign alu_op[ 0] = inst_add_w | inst_addi_w | inst_ld_w | inst_st_w 
                     | inst_jirl | inst_bl | inst_pcaddu12i;
@@ -287,12 +287,14 @@ assign need_si20_lu12i  =  inst_lu12i_w;
 assign need_si20_pcaddu12i = inst_pcaddu12i;
 assign need_si26  =  inst_b | inst_bl;
 assign src2_is_4  =  inst_jirl | inst_bl;
+assign need_ui12  =  inst_andi | inst_ori  | inst_xori;
 
 
 assign ds_imm =  need_si20_pcaddu12i ? {i20,12'b0}:
-                 src2_is_4           ? 32'h4      :
-                 need_si20_lu12i ? {12'b0,i20[4:0],i20[19:5]} :  //i20[16:5]==i12[11:0]
-  /*need_ui5 || need_si12*/ {{20{i12[11]}}, i12[11:0]} ;
+                 src2_is_4           ? 32'h4 :
+                 need_si20_lu12i     ? {12'b0,i20[4:0],i20[19:5]} :  //i20[16:5]==i12[11:0]
+                 need_ui12           ? {20'b0,i12[11:0]} :
+             /*need_ui5 || need_si12*/ {{20{i12[11]}}, i12[11:0]} ;
 
 assign br_offs = need_si26 ? {{ 4{i26[25]}}, i26[25:0], 2'b0} : 
                              {{14{i16[15]}}, i16[15:0], 2'b0} ;
@@ -315,11 +317,10 @@ assign src2_is_imm   = inst_slli_w |
                        inst_jirl   |
                        inst_bl     |
                        inst_slti   |
-                       inst_sltui  ;
-wire src2_is_zimm;
-assign src2_is_zimm   = inst_andi | 
-                        inst_ori  |
-                        inst_xori ;
+                       inst_sltui  |
+                       inst_andi   |
+                       inst_ori    |
+                       inst_xori   ;
 
 
 assign res_from_mem  = inst_ld_w;

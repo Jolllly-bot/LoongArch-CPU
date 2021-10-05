@@ -28,59 +28,54 @@ reg  [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus_r;
 wire [11:0] es_alu_op     ;
 wire        es_src1_is_pc ;
 wire        es_src2_is_imm; 
-wire        es_src2_is_zimm; 
 wire        es_gr_we      ;
 wire        es_mem_we     ;
 wire [ 4:0] es_dest       ;
 wire [31:0] es_imm        ;
-wire [31:0] es_zimm       ;
 wire [31:0] es_rj_value   ;
 wire [31:0] es_rkd_value  ;
 wire [31:0] es_pc         ;
 
-wire [63:0] unsigned_prod, signed_prod;
-reg signed_divisor_tvalid;
-wire signed_divisor_tready;
-wire [31:0] signed_divisor_tdata;
-reg signed_dividend_tvalid;
-wire signed_dividend_tready;
-wire [31:0] signed_dividend_tdata;
+wire [63:0] unsigned_prod         ;
+wire [63:0] signed_prod           ;
 
-reg unsigned_divisor_tvalid;
-wire unsigned_divisor_tready;
-wire [31:0] unsigned_divisor_tdata;
-reg unsigned_dividend_tvalid;
-wire unsigned_dividend_tready;
-wire [31:0] unsigned_dividend_tdata;
+reg         signed_divisor_tvalid ;
+wire        signed_divisor_tready ;
+reg         signed_dividend_tvalid;
+wire        signed_dividend_tready;
+wire [31:0] signed_divisor_tdata  ;
+wire [31:0] signed_dividend_tdata ;
+wire [63:0] signed_div_result     ;
 
-wire [63:0] unsigned_div_result;
+reg         unsigned_divisor_tvalid ;
+wire        unsigned_divisor_tready ;
+wire [31:0] unsigned_divisor_tdata  ;
+reg         unsigned_dividend_tvalid;
+wire        unsigned_dividend_tready;
+wire [31:0] unsigned_dividend_tdata ;
+wire [63:0] unsigned_div_result     ;
 
+wire        signed_dout_tvalid      ;
+wire        unsigned_dout_tvalid    ;
 
-wire [63:0] signed_div_result;
-
-wire signed_dout_tvalid;
-wire unsigned_dout_tvalid;
-
-assign signed_divisor_tdata = es_alu_src2;
 assign signed_dividend_tdata = es_alu_src1;
-
+assign signed_divisor_tdata  = es_alu_src2;
 
 wire        es_res_from_mem;
 
-wire es_mul_signed;
-wire es_mul_unsigned;
-wire es_mul_high;
-wire es_div_signed;
-wire es_div_unsigned;
-wire es_div_mod;
+wire        es_mul_signed  ;
+wire        es_mul_unsigned;
+wire        es_mul_high    ;
+wire        es_div_signed  ;
+wire        es_div_unsigned;
+wire        es_div_mod     ;
 
-assign {es_mul_signed,
-        es_mul_unsigned,
-        es_mul_high,
-        es_div_signed,
-        es_div_unsigned,
-        es_div_mod,
-        es_src2_is_zimm,
+assign {es_mul_signed  ,  //155:155
+        es_mul_unsigned,  //154:154
+        es_mul_high    ,  //153:153
+        es_div_signed  ,  //152:152
+        es_div_unsigned,  //151:151
+        es_div_mod     ,  //150:150
         es_alu_op      ,  //149:138
         es_res_from_mem,  //137:137
         es_src1_is_pc  ,  //136:136
@@ -97,15 +92,14 @@ assign {es_mul_signed,
 wire [31:0] es_alu_src1   ;
 wire [31:0] es_alu_src2   ;
 wire [31:0] es_alu_result ;
-wire [31:0] es_result ;
-reg [3:0] div_cycle;
-reg [3:0] divu_cycle;
+wire [31:0] es_result     ;
+reg  [3:0] div_cycle      ;
+reg  [3:0] divu_cycle     ;
 
-//assign es_res_from_mem = es_load_op;
 assign es_to_ms_bus = {es_res_from_mem,  //70:70
                        es_gr_we       ,  //69:69
                        es_dest        ,  //68:64
-                       es_result  ,  //63:32
+                       es_result      ,  //63:32
                        es_pc             //31:0
                       };
 
@@ -115,13 +109,15 @@ wire es_blk_valid;
 
 assign es_fwd_valid = es_valid && es_gr_we;
 assign es_blk_valid = es_valid && es_res_from_mem;
-assign es_fwd_bus = {es_fwd_valid ,  //38:38
+assign es_fwd_bus = {es_fwd_valid ,   //38:38
                      es_blk_valid ,   //37:37
-                     es_dest      ,  //36:32
-                     es_alu_result  //31:0
+                     es_dest      ,   //36:32
+                     es_alu_result    //31:0
                     };
 
-assign es_ready_go    = (~(es_div_signed | es_div_unsigned)) | (es_div_signed & signed_dout_tvalid) | (es_div_unsigned & unsigned_dout_tvalid) ;
+assign es_ready_go    = (~(es_div_signed | es_div_unsigned)) 
+                        | (es_div_signed & signed_dout_tvalid) 
+                        | (es_div_unsigned & unsigned_dout_tvalid);
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go;
 always @(posedge clk) begin
@@ -137,23 +133,20 @@ always @(posedge clk) begin
     end
 end
 
-assign es_result = (es_mul_signed && es_mul_high)  ? signed_prod[63:32] :
-                   (es_mul_signed && ~es_mul_high) ? signed_prod[31:0] :
-                   (es_mul_unsigned && es_mul_high)? unsigned_prod[63:32]:
-                   (es_div_signed && es_div_mod)   ? signed_div_result[63:32]:
-                   (es_div_signed && ~es_div_mod)  ? signed_div_result[31:0]:
-                   (es_div_unsigned && es_div_mod) ? unsigned_div_result[63:32]:
-                   (es_div_unsigned && ~es_div_mod)? unsigned_div_result[31:0] :
-                   es_alu_result;
+assign es_result = (es_mul_signed   &&  es_mul_high)? signed_prod[63:32] :
+                   (es_mul_signed   && ~es_mul_high)? signed_prod[31:0] :
+                   (es_mul_unsigned &&  es_mul_high)? unsigned_prod[63:32]:
+                   (es_div_signed   &&  es_div_mod) ? signed_div_result[63:32]:
+                   (es_div_signed   && ~es_div_mod) ? signed_div_result[31:0]:
+                   (es_div_unsigned &&  es_div_mod) ? unsigned_div_result[63:32]:
+                   (es_div_unsigned && ~es_div_mod) ? unsigned_div_result[31:0] :
+                                                      es_alu_result;
 
 assign es_alu_src1 = es_src1_is_pc  ? es_pc[31:0] : 
                                       es_rj_value;
                                       
-assign es_alu_src2 = es_src2_is_zimm ? es_zimm : 
-                     es_src2_is_imm ? es_imm : 
+assign es_alu_src2 = es_src2_is_imm ? es_imm : 
                                       es_rkd_value;
-
-assign es_zimm = {20'b0,es_imm[11:0]};
 
 alu u_alu(
     .alu_op     (es_alu_op    ),
