@@ -401,12 +401,12 @@ assign rkd_value = es_fwd_valid && es_dest == rf_raddr2 ? es_data
 assign rj_eq_rd = (rj_value == rkd_value);
 
 
-assign rj_sub_rd = rj_value + (~rkd_value) + 1'b1;
+assign rj_sub_rd = {1'b0,rj_value} + {1'b0,~rkd_value} + 1'b1;
 
 assign rj_lt_rd = (rj_value[31] & ~rkd_value[31])
                 | ((rj_value[31] ~^ rkd_value[31]) & rj_sub_rd[31]);
 
-assign rj_ltu_rd = rj_sub_rd[32];
+assign rj_ltu_rd = ~rj_sub_rd[32];
 
 
 assign br_taken = (   inst_beq  &&  rj_eq_rd
