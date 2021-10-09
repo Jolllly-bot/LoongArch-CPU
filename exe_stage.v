@@ -36,33 +36,13 @@ wire [31:0] es_rj_value   ;
 wire [31:0] es_rkd_value  ;
 wire [31:0] es_pc         ;
 
-wire [63:0] unsigned_prod         ;
-wire [63:0] signed_prod           ;
-
-reg         signed_divisor_tvalid ;
-wire        signed_divisor_tready ;
-reg         signed_dividend_tvalid;
-wire        signed_dividend_tready;
-wire [31:0] signed_divisor_tdata  ;
-wire [31:0] signed_dividend_tdata ;
-wire [63:0] signed_div_result     ;
-
-reg         unsigned_divisor_tvalid ;
-wire        unsigned_divisor_tready ;
-wire [31:0] unsigned_divisor_tdata  ;
-reg         unsigned_dividend_tvalid;
-wire        unsigned_dividend_tready;
-wire [31:0] unsigned_dividend_tdata ;
-wire [63:0] unsigned_div_result     ;
-
-wire        signed_dout_tvalid      ;
-wire        unsigned_dout_tvalid    ;
-
-assign signed_dividend_tdata = es_alu_src1;
-assign signed_divisor_tdata  = es_alu_src2;
-
 wire        es_res_from_mem;
-wire [ 4:0] es_load_op;
+wire [ 4:0] es_load_op     ;
+wire [ 2:0] es_st_op    ;
+wire [31:0] es_st_data     ;
+wire [ 3:0] es_st_strb     ;
+wire [ 1:0] es_vaddr       ;
+
 wire        es_mul_signed  ;
 wire        es_mul_unsigned;
 wire        es_mul_high    ;
@@ -71,6 +51,7 @@ wire        es_div_unsigned;
 wire        es_div_mod     ;
 
 assign {es_load_op     ,
+        es_st_op    ,
         es_mul_signed  ,  //155:155
         es_mul_unsigned,  //154:154
         es_mul_high    ,  //153:153
@@ -135,15 +116,6 @@ always @(posedge clk) begin
     end
 end
 
-assign es_result = (es_mul_signed   &&  es_mul_high)? signed_prod[63:32] :
-                   (es_mul_signed   && ~es_mul_high)? signed_prod[31:0] :
-                   (es_mul_unsigned &&  es_mul_high)? unsigned_prod[63:32]:
-                   (es_div_signed   &&  es_div_mod) ? signed_div_result[63:32]:
-                   (es_div_signed   && ~es_div_mod) ? signed_div_result[31:0]:
-                   (es_div_unsigned &&  es_div_mod) ? unsigned_div_result[63:32]:
-                   (es_div_unsigned && ~es_div_mod) ? unsigned_div_result[31:0] :
-                                                      es_alu_result;
-
 assign es_alu_src1 = es_src1_is_pc  ? es_pc[31:0] : 
                                       es_rj_value;
                                       
@@ -157,11 +129,33 @@ alu u_alu(
     .alu_result (es_alu_result)
     );
 
+//-------------------------------------------
+wire [63:0] unsigned_prod         ;
+wire [63:0] signed_prod           ;
+
+reg         signed_divisor_tvalid ;
+wire        signed_divisor_tready ;
+reg         signed_dividend_tvalid;
+wire        signed_dividend_tready;
+wire [31:0] signed_divisor_tdata  ;
+wire [31:0] signed_dividend_tdata ;
+wire [63:0] signed_div_result     ;
+
+reg         unsigned_divisor_tvalid ;
+wire        unsigned_divisor_tready ;
+wire [31:0] unsigned_divisor_tdata  ;
+reg         unsigned_dividend_tvalid;
+wire        unsigned_dividend_tready;
+wire [31:0] unsigned_dividend_tdata ;
+wire [63:0] unsigned_div_result     ;
+
+wire        signed_dout_tvalid      ;
+wire        unsigned_dout_tvalid    ;
 
 assign unsigned_prod = es_alu_src1 * es_alu_src2;
 assign signed_prod = $signed(es_alu_src1) * $signed(es_alu_src2);
 
-//-------------------------------------------
+
 div_signed u_div_signed(
     .aclk                       (clk),
     .s_axis_divisor_tvalid      (signed_divisor_tvalid),
@@ -269,10 +263,29 @@ begin
     
 end
 
+assign es_result = (es_mul_signed   &&  es_mul_high)? signed_prod[63:32] :
+                   (es_mul_signed   && ~es_mul_high)? signed_prod[31:0] :
+                   (es_mul_unsigned &&  es_mul_high)? unsigned_prod[63:32]:
+                   (es_div_signed   &&  es_div_mod) ? signed_div_result[63:32]:
+                   (es_div_signed   && ~es_div_mod) ? signed_div_result[31:0]:
+                   (es_div_unsigned &&  es_div_mod) ? unsigned_div_result[63:32]:
+                   (es_div_unsigned && ~es_div_mod) ? unsigned_div_result[31:0] :
+                                                      es_alu_result;
+                                                      
+
+assign es_vaddr = es_alu_result[1:0];
+
+assign es_st_data = {32{es_st_op[0]}} & {4{es_rkd_value[ 7:0]}}
+                  | {32{es_st_op[1]}} & {2{es_rkd_value[15:0]}}
+                  | {32{es_st_op[2]}} & es_rkd_value;
+
+assign es_st_strb = { 4{es_st_op[0]}} & (4'b0001 << es_vaddr)
+                  | { 4{es_st_op[1]}} & (4'b0011 << es_vaddr)
+                  | { 4{es_st_op[2]}} & 4'b1111;
 
 assign data_sram_en    = (es_res_from_mem || es_mem_we) && es_valid;
-assign data_sram_wen   = es_mem_we ? 4'hf : 4'h0;
+assign data_sram_wen   = es_mem_we ? es_st_strb : 4'h0;
 assign data_sram_addr  = {es_alu_result[31:2], 2'b0};
-assign data_sram_wdata = es_rkd_value;
+assign data_sram_wdata = es_st_data;
 
 endmodule

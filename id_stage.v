@@ -43,6 +43,7 @@ wire        br_taken;
 wire [31:0] br_target;
 
 wire [ 4:0] load_op;
+wire [ 2:0] store_op;
 wire [11:0] alu_op;
 wire        src1_is_pc;
 wire        src2_is_imm;
@@ -156,6 +157,7 @@ wire        rj_ltu_rd;
 assign br_bus       = {br_taken,br_target};
 
 assign ds_to_es_bus = {load_op     ,
+                       store_op    ,
                        mul_signed  ,
                        mul_unsigned,
                        mul_high    ,
@@ -249,13 +251,25 @@ assign inst_slli_w = op_31_26_d[6'h00] & op_25_22_d[4'h1] & op_21_20_d[2'h0] & o
 assign inst_srli_w = op_31_26_d[6'h00] & op_25_22_d[4'h1] & op_21_20_d[2'h0] & op_19_15_d[5'h09];
 assign inst_srai_w = op_31_26_d[6'h00] & op_25_22_d[4'h1] & op_21_20_d[2'h0] & op_19_15_d[5'h11];
 assign inst_addi_w = op_31_26_d[6'h00] & op_25_22_d[4'ha];
+
+assign inst_ld_b   = op_31_26_d[6'h0a] & op_25_22_d[4'h0];
+assign inst_ld_h   = op_31_26_d[6'h0a] & op_25_22_d[4'h1];
 assign inst_ld_w   = op_31_26_d[6'h0a] & op_25_22_d[4'h2];
+assign inst_st_b   = op_31_26_d[6'h0a] & op_25_22_d[4'h4];
+assign inst_st_h   = op_31_26_d[6'h0a] & op_25_22_d[4'h5];
 assign inst_st_w   = op_31_26_d[6'h0a] & op_25_22_d[4'h6];
+assign inst_ld_bu  = op_31_26_d[6'h0a] & op_25_22_d[4'h8];
+assign inst_ld_hu  = op_31_26_d[6'h0a] & op_25_22_d[4'h9];
+
 assign inst_jirl   = op_31_26_d[6'h13];
 assign inst_b      = op_31_26_d[6'h14];
 assign inst_bl     = op_31_26_d[6'h15];
 assign inst_beq    = op_31_26_d[6'h16];
 assign inst_bne    = op_31_26_d[6'h17];
+assign inst_blt    = op_31_26_d[6'h18] ;
+assign inst_bge    = op_31_26_d[6'h19] ;
+assign inst_bltu   = op_31_26_d[6'h1a] ;
+assign inst_bgeu   = op_31_26_d[6'h1b] ;
 assign inst_lu12i_w= op_31_26_d[6'h05] & ~ds_inst[25];
 
 assign inst_slti  = op_31_26_d[6'h00] & op_25_22_d[4'h8];
@@ -283,18 +297,8 @@ assign div_signed   = inst_div_w  | inst_mod_w;
 assign div_unsigned = inst_div_wu | inst_mod_wu;
 assign div_mod      = inst_div_w  | inst_div_wu;
 
-assign inst_blt  = op_31_26_d[6'h18] ;
-assign inst_bge  = op_31_26_d[6'h19] ;
-assign inst_bltu = op_31_26_d[6'h1a] ;
-assign inst_bgeu = op_31_26_d[6'h1b] ;
-
-assign inst_ld_b  = op_31_26_d[6'h0a] & op_25_22_d[4'h0];
-assign inst_ld_h  = op_31_26_d[6'h0a] & op_25_22_d[4'h1];
-assign inst_ld_bu = op_31_26_d[6'h0a] & op_25_22_d[4'h8];
-assign inst_ld_hu = op_31_26_d[6'h0a] & op_25_22_d[4'h9];
-
-assign alu_op[ 0] = inst_add_w | inst_addi_w | inst_st_w |
-                    | res_from_mem
+assign alu_op[ 0] = inst_add_w | inst_addi_w | inst_st_w 
+                    | inst_st_b | inst_st_h | res_from_mem
                     | inst_jirl | inst_bl | inst_pcaddu12i;
 assign alu_op[ 1] = inst_sub_w;
 assign alu_op[ 2] = inst_slt | inst_slti;
@@ -314,8 +318,12 @@ assign load_op[2] = inst_ld_w;
 assign load_op[3] = inst_ld_bu;
 assign load_op[4] = inst_ld_hu;
 
+assign store_op[0] = inst_st_b;
+assign store_op[1] = inst_st_h;
+assign store_op[2] = inst_st_w;
+
 assign need_ui5   =  inst_slli_w | inst_srli_w | inst_srai_w;
-assign need_si12  =  inst_addi_w | inst_st_w | res_from_mem;
+assign need_si12  =  inst_addi_w | inst_st_w | inst_st_b | inst_st_h | res_from_mem;
 assign need_si16  =  inst_jirl | inst_beq | inst_bne | inst_blt | inst_bge | inst_bltu | inst_bgeu;
 assign need_si20_lu12i  =  inst_lu12i_w;
 assign need_si20_pcaddu12i = inst_pcaddu12i;
@@ -336,7 +344,8 @@ assign br_offs = need_si26 ? {{ 4{i26[25]}}, i26[25:0], 2'b0} :
 assign jirl_offs = {{14{i16[15]}}, i16[15:0], 2'b0};
 
 
-assign src_reg_is_rd = inst_beq | inst_bne | inst_blt | inst_bge | inst_bltu | inst_bgeu | inst_st_w;
+assign src_reg_is_rd = inst_beq | inst_bne | inst_blt | inst_bge | inst_bltu | inst_bgeu 
+                     | inst_st_w | inst_st_b | inst_st_h;
 
 assign src1_is_pc    = inst_jirl | inst_bl | inst_pcaddu12i;
 
@@ -345,6 +354,8 @@ assign src2_is_imm   = inst_slli_w |
                        inst_srai_w |
                        inst_addi_w |
                        inst_st_w   |
+                       inst_st_b   |
+                       inst_st_h   |
                        inst_lu12i_w|
                        inst_pcaddu12i|
                        inst_jirl   |
@@ -359,8 +370,9 @@ assign src2_is_imm   = inst_slli_w |
 
 assign res_from_mem  = inst_ld_w | inst_ld_b | inst_ld_bu | inst_ld_h | inst_ld_hu;
 assign dst_is_r1     = inst_bl;
-assign gr_we         = ~inst_st_w & ~inst_beq & ~inst_bne & ~inst_b & ~inst_blt & ~inst_bge & ~inst_bltu & ~inst_bgeu;
-assign mem_we        = inst_st_w;
+assign gr_we         = ~inst_st_w & ~inst_st_b & ~inst_st_h 
+                     & ~inst_beq & ~inst_bne & ~inst_b & ~inst_blt & ~inst_bge & ~inst_bltu & ~inst_bgeu;
+assign mem_we        = inst_st_w | inst_st_b | inst_st_h;
 assign dest          = dst_is_r1 ? 5'd1 : rd;
 
 assign rf_raddr1 = rj;

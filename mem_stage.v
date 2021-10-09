@@ -70,30 +70,30 @@ always @(posedge clk) begin
     end
 end
 
-wire [ 3:0] mem_addr;
+wire [ 3:0] ms_vaddr;
 wire [31:0] lb_data;
 wire [31:0] lbu_data;
 wire [31:0] lh_data;
 wire [31:0] lhu_data;
 wire [31:0] lw_data;
 
-decoder_2_4 u_dec_ms(.in(ms_alu_result[1:0]), .out(mem_addr));
+decoder_2_4 u_dec_ms(.in(ms_alu_result[1:0]), .out(ms_vaddr));
 
-assign lb_data = {32{mem_addr[0]}} & {{24{data_sram_rdata[ 7]}}, data_sram_rdata[ 7: 0]}
-                |{32{mem_addr[1]}} & {{24{data_sram_rdata[15]}}, data_sram_rdata[15: 8]}
-                |{32{mem_addr[2]}} & {{24{data_sram_rdata[23]}}, data_sram_rdata[23:16]}
-                |{32{mem_addr[3]}} & {{24{data_sram_rdata[31]}}, data_sram_rdata[31:24]};
+assign lb_data = {32{ms_vaddr[0]}} & {{24{data_sram_rdata[ 7]}}, data_sram_rdata[ 7: 0]}
+                |{32{ms_vaddr[1]}} & {{24{data_sram_rdata[15]}}, data_sram_rdata[15: 8]}
+                |{32{ms_vaddr[2]}} & {{24{data_sram_rdata[23]}}, data_sram_rdata[23:16]}
+                |{32{ms_vaddr[3]}} & {{24{data_sram_rdata[31]}}, data_sram_rdata[31:24]};
 
-assign lbu_data = {32{mem_addr[0]}} & {24'b0, data_sram_rdata[ 7: 0]}
-                 |{32{mem_addr[1]}} & {24'b0, data_sram_rdata[15: 8]}
-                 |{32{mem_addr[2]}} & {24'b0, data_sram_rdata[23:16]}
-                 |{32{mem_addr[3]}} & {24'b0, data_sram_rdata[31:24]};
+assign lbu_data = {32{ms_vaddr[0]}} & {24'b0, data_sram_rdata[ 7: 0]}
+                 |{32{ms_vaddr[1]}} & {24'b0, data_sram_rdata[15: 8]}
+                 |{32{ms_vaddr[2]}} & {24'b0, data_sram_rdata[23:16]}
+                 |{32{ms_vaddr[3]}} & {24'b0, data_sram_rdata[31:24]};
 
-assign lh_data = {32{ mem_addr[0]}} & {{16{data_sram_rdata[15]}}, data_sram_rdata[15: 0]}
-                |{32{~mem_addr[0]}} & {{16{data_sram_rdata[31]}}, data_sram_rdata[31:16]};
+assign lh_data = {32{ ms_vaddr[0]}} & {{16{data_sram_rdata[15]}}, data_sram_rdata[15: 0]}
+                |{32{~ms_vaddr[0]}} & {{16{data_sram_rdata[31]}}, data_sram_rdata[31:16]};
 
-assign lhu_data = {32{ mem_addr[0]}} & {16'b0, data_sram_rdata[15: 0]}
-                 |{32{~mem_addr[0]}} & {16'b0, data_sram_rdata[31:16]};
+assign lhu_data = {32{ ms_vaddr[0]}} & {16'b0, data_sram_rdata[15: 0]}
+                 |{32{~ms_vaddr[0]}} & {16'b0, data_sram_rdata[31:16]};
 
 assign lw_data = data_sram_rdata;
 
