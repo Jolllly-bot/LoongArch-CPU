@@ -22,12 +22,14 @@ reg         ms_valid;
 wire        ms_ready_go;
 
 reg [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus_r;
+wire [ 4:0] ms_load_op;
 wire        ms_res_from_mem;
 wire        ms_gr_we;
 wire [ 4:0] ms_dest;
 wire [31:0] ms_alu_result;
 wire [31:0] ms_pc;
-assign {ms_res_from_mem,  //70:70
+assign {ms_load_op     ,
+        ms_res_from_mem,  //70:70
         ms_gr_we       ,  //69:69
         ms_dest        ,  //68:64
         ms_alu_result  ,  //63:32
@@ -68,7 +70,38 @@ always @(posedge clk) begin
     end
 end
 
-assign mem_result = data_sram_rdata;
+wire [ 3:0] mem_addr;
+wire [31:0] lb_data;
+wire [31:0] lbu_data;
+wire [31:0] lh_data;
+wire [31:0] lhu_data;
+wire [31:0] lw_data;
+
+decoder_2_4 u_dec_ms(.in(ms_alu_result[1:0]), .out(mem_addr));
+
+assign lb_data = {32{mem_addr[0]}} & {{24{data_sram_rdata[ 7]}}, data_sram_rdata[ 7: 0]}
+                |{32{mem_addr[1]}} & {{24{data_sram_rdata[15]}}, data_sram_rdata[15: 8]}
+                |{32{mem_addr[2]}} & {{24{data_sram_rdata[23]}}, data_sram_rdata[23:16]}
+                |{32{mem_addr[3]}} & {{24{data_sram_rdata[31]}}, data_sram_rdata[31:24]};
+
+assign lbu_data = {32{mem_addr[0]}} & {24'b0, data_sram_rdata[ 7: 0]}
+                 |{32{mem_addr[1]}} & {24'b0, data_sram_rdata[15: 8]}
+                 |{32{mem_addr[2]}} & {24'b0, data_sram_rdata[23:16]}
+                 |{32{mem_addr[3]}} & {24'b0, data_sram_rdata[31:24]};
+
+assign lh_data = {32{ mem_addr[0]}} & {{16{data_sram_rdata[15]}}, data_sram_rdata[15: 0]}
+                |{32{~mem_addr[0]}} & {{16{data_sram_rdata[31]}}, data_sram_rdata[31:16]};
+
+assign lhu_data = {32{ mem_addr[0]}} & {16'b0, data_sram_rdata[15: 0]}
+                 |{32{~mem_addr[0]}} & {16'b0, data_sram_rdata[31:16]};
+
+assign lw_data = data_sram_rdata;
+
+assign mem_result = {32{ms_load_op[0]}} & lb_data
+                  | {32{ms_load_op[1]}} & lh_data
+                  | {32{ms_load_op[2]}} & lw_data
+                  | {32{ms_load_op[3]}} & lbu_data
+                  | {32{ms_load_op[4]}} & lhu_data;
 
 assign ms_final_result = ms_res_from_mem ? mem_result
                                          : ms_alu_result;

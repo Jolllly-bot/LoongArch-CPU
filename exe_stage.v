@@ -62,7 +62,7 @@ assign signed_dividend_tdata = es_alu_src1;
 assign signed_divisor_tdata  = es_alu_src2;
 
 wire        es_res_from_mem;
-
+wire [ 4:0] es_load_op;
 wire        es_mul_signed  ;
 wire        es_mul_unsigned;
 wire        es_mul_high    ;
@@ -70,7 +70,8 @@ wire        es_div_signed  ;
 wire        es_div_unsigned;
 wire        es_div_mod     ;
 
-assign {es_mul_signed  ,  //155:155
+assign {es_load_op     ,
+        es_mul_signed  ,  //155:155
         es_mul_unsigned,  //154:154
         es_mul_high    ,  //153:153
         es_div_signed  ,  //152:152
@@ -96,7 +97,8 @@ wire [31:0] es_result     ;
 reg  [3:0] div_cycle      ;
 reg  [3:0] divu_cycle     ;
 
-assign es_to_ms_bus = {es_res_from_mem,  //70:70
+assign es_to_ms_bus = {es_load_op     ,
+                       es_res_from_mem,  //70:70
                        es_gr_we       ,  //69:69
                        es_dest        ,  //68:64
                        es_result      ,  //63:32
@@ -270,7 +272,7 @@ end
 
 assign data_sram_en    = (es_res_from_mem || es_mem_we) && es_valid;
 assign data_sram_wen   = es_mem_we ? 4'hf : 4'h0;
-assign data_sram_addr  = es_alu_result;
+assign data_sram_addr  = {es_alu_result[31:2], 2'b0};
 assign data_sram_wdata = es_rkd_value;
 
 endmodule
