@@ -323,7 +323,7 @@ assign store_op[1] = inst_st_h;
 assign store_op[2] = inst_st_w;
 
 assign need_ui5   =  inst_slli_w | inst_srli_w | inst_srai_w;
-assign need_si12  =  inst_addi_w | inst_st_w | inst_st_b | inst_st_h | res_from_mem;
+assign need_si12  =  inst_addi_w | inst_slti | inst_sltui | inst_st_w | inst_st_b | inst_st_h | res_from_mem;
 assign need_si16  =  inst_jirl | inst_beq | inst_bne | inst_blt | inst_bge | inst_bltu | inst_bgeu;
 assign need_si20_lu12i  =  inst_lu12i_w;
 assign need_si20_pcaddu12i = inst_pcaddu12i;
