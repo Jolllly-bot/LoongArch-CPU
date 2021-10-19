@@ -50,7 +50,21 @@ wire        es_div_signed  ;
 wire        es_div_unsigned;
 wire        es_div_mod     ;
 
-assign {es_load_op     ,
+wire [13:0] es_csr_num;
+wire es_csr_we;
+wire es_csr_re;
+wire [31:0] es_csr_wmask;
+wire es_ertn;
+wire es_syscall;
+wire [31:0] es_csr_wvalue;
+
+assign {es_ertn,
+        es_syscall,
+        es_csr_re   ,
+        es_csr_we   ,
+        es_csr_num  ,
+        es_csr_wmask,
+        es_load_op     ,
         es_st_op    ,
         es_mul_signed  ,  //155:155
         es_mul_unsigned,  //154:154
@@ -78,7 +92,16 @@ wire [31:0] es_result     ;
 reg  [3:0] div_cycle      ;
 reg  [3:0] divu_cycle     ;
 
-assign es_to_ms_bus = {es_load_op     ,
+assign es_csr_wvalue = es_rkd_value;
+
+assign es_to_ms_bus = {es_csr_wvalue,
+                       es_ertn,
+                       es_syscall,
+                       es_csr_re   ,
+                       es_csr_we   ,
+                       es_csr_num  ,
+                       es_csr_wmask,
+                       es_load_op     ,
                        es_res_from_mem,  //70:70
                        es_gr_we       ,  //69:69
                        es_dest        ,  //68:64

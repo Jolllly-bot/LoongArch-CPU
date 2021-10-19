@@ -97,6 +97,7 @@ wire        inst_beq;
 wire        inst_bne;    
 wire        inst_lu12i_w;
 
+
 wire inst_slti;
 wire inst_sltui;
 wire inst_andi;
@@ -127,6 +128,12 @@ wire inst_ld_hu;
 wire inst_st_b;
 wire inst_st_h;
 
+wire inst_csrrd;
+wire inst_csrwr;
+wire inst_csrxchg;
+wire inst_syscall;
+wire inst_ertn; 
+
 
 wire mul_signed;
 wire mul_unsigned;
@@ -156,7 +163,13 @@ wire        rj_ltu_rd;
 
 assign br_bus       = {br_taken,br_target};
 
-assign ds_to_es_bus = {load_op     ,
+assign ds_to_es_bus = {inst_ertn,
+                       inst_syscall,
+                       id_csr_re   ,
+                       id_csr_we   ,
+                       id_csr_num  ,
+                       id_csr_wmask,
+                       load_op     ,
                        store_op    ,
                        mul_signed  ,
                        mul_unsigned,
@@ -185,6 +198,13 @@ wire        es_blk_valid;
 wire        ms_fwd_valid;
 wire [4:0]  ms_dest;
 wire [31:0] ms_data;
+//------------------------------
+wire [13:0] id_csr_num;
+wire id_csr_we;
+wire id_csr_re;
+wire [31:0] id_csr_wmask;
+
+
 
 wire        es_rf_eq;
 wire        ms_rf_eq;
@@ -233,6 +253,8 @@ assign i12  = ds_inst[21:10];
 assign i20  = ds_inst[24: 5];
 assign i16  = ds_inst[25:10];
 assign i26  = {ds_inst[ 9: 0], ds_inst[25:10]};
+
+
 
 decoder_6_64 u_dec0(.in(op_31_26 ), .out(op_31_26_d ));
 decoder_4_16 u_dec1(.in(op_25_22 ), .out(op_25_22_d ));
@@ -289,6 +311,19 @@ assign inst_div_w   = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & 
 assign inst_mod_w   = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h01];
 assign inst_div_wu  = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h02];
 assign inst_mod_wu  = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h03];
+
+assign inst_csrrd =  op_31_26_d[6'h01] & ~ds_inst[25] & ~ds_inst[24] & (rj == 5'h00);
+assign inst_csrwr =  op_31_26_d[6'h01] & ~ds_inst[25] & ~ds_inst[24] & (rj == 5'h01);
+assign inst_csrxchg = op_31_26_d[6'h01] & ~ds_inst[25] & ~ds_inst[24] & (rj != 5'h01) & (rj != 5'h00);
+assign inst_ertn = op_31_26_d[6'h01] & op_25_22_d[4'h9]  & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b01110) & (rj == 5'h0) & (rd == 5'h0);
+assign inst_syscall = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h16];
+
+assign id_csr_num = inst_ertn ? `CSR_ERA 
+                  : inst_syscall ? `CSR_EENTRY
+                  : ds_inst[23:10];
+assign id_csr_re = inst_csrrd | inst_csrxchg;
+assign id_csr_we = inst_csrwr | inst_csrxchg;
+assign id_csr_wmask = inst_csrxchg ? rj_value : {32{1'b1}};
 
 assign mul_signed   = inst_mul_w  | inst_mulh_w;
 assign mul_unsigned = inst_mulh_wu;

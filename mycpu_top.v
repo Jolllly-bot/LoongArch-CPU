@@ -38,6 +38,7 @@ wire [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus;
 wire [`ES_FWD_BUS_WD   -1:0] es_fwd_bus;
 wire [`MS_FWD_BUS_WD   -1:0] ms_fwd_bus;
 wire [`BR_BUS_WD       -1:0] br_bus;
+wire [32:0] ws_to_fs_bus;
 
 // IF stage
 if_stage if_stage(
@@ -55,7 +56,8 @@ if_stage if_stage(
     .inst_sram_wen  (inst_sram_wen  ),
     .inst_sram_addr (inst_sram_addr ),
     .inst_sram_wdata(inst_sram_wdata),
-    .inst_sram_rdata(inst_sram_rdata)
+    .inst_sram_rdata(inst_sram_rdata),
+    .ws_to_fs_bus(ws_to_fs_bus)
 );
 // ID stage
 id_stage id_stage(
@@ -132,7 +134,8 @@ wb_stage wb_stage(
     .debug_wb_pc      (debug_wb_pc      ),
     .debug_wb_rf_wen  (debug_wb_rf_wen  ),
     .debug_wb_rf_wnum (debug_wb_rf_wnum ),
-    .debug_wb_rf_wdata(debug_wb_rf_wdata)
+    .debug_wb_rf_wdata(debug_wb_rf_wdata),
+    .ws_to_fs_bus(ws_to_fs_bus)
 );
 
 endmodule

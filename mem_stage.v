@@ -28,7 +28,23 @@ wire        ms_gr_we;
 wire [ 4:0] ms_dest;
 wire [31:0] ms_alu_result;
 wire [31:0] ms_pc;
-assign {ms_load_op     ,
+
+wire [13:0] ms_csr_num;
+wire ms_csr_we;
+wire ms_csr_re;
+wire [31:0] ms_csr_wmask;
+wire ms_ertn;
+wire ms_syscall;
+wire [31:0] ms_csr_wvalue;
+
+assign {ms_csr_wvalue,
+        ms_ertn,
+        ms_syscall,
+        ms_csr_re   ,
+        ms_csr_we   ,
+        ms_csr_num  ,
+        ms_csr_wmask,
+        ms_load_op     ,
         ms_res_from_mem,  //70:70
         ms_gr_we       ,  //69:69
         ms_dest        ,  //68:64
@@ -39,7 +55,14 @@ assign {ms_load_op     ,
 wire [31:0] mem_result;
 wire [31:0] ms_final_result;
 
-assign ms_to_ws_bus = {ms_gr_we       ,  //69:69
+assign ms_to_ws_bus = {ms_csr_wvalue,
+                       ms_ertn,
+                       ms_syscall,
+                       ms_csr_re   ,
+                       ms_csr_we   ,
+                       ms_csr_num  ,
+                       ms_csr_wmask,
+                       ms_gr_we       ,  //69:69
                        ms_dest        ,  //68:64
                        ms_final_result,  //63:32
                        ms_pc             //31:0
