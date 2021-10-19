@@ -93,11 +93,11 @@ assign debug_wb_rf_wen   = {4{rf_we}};
 assign debug_wb_rf_wnum  = ws_dest;
 assign debug_wb_rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
 
-assign eret_flush = ws_ertn;
+assign eret_flush = ws_ertn && ws_valid;
 assign wb_ecode = `ECODE_SYS;
 
 assign wb_esubcode = 9'b0;
-assign wb_ex = ws_syscall;
+assign wb_ex = ws_syscall && ws_valid;
 
 assign ws_flush_pipe = (wb_ex|eret_flush) && ws_valid;
 assign ws_to_fs_bus = ws_csr_rvalue;

@@ -20,11 +20,13 @@ module csr(
   wire [31:0] csr_crmd_rvalue;
   reg  [ 1:0] csr_crmd_plv;
   reg         csr_crmd_ie;
+  reg         csr_crmd_da;
   
   always @(posedge clk) begin
     if (reset)begin
         csr_crmd_plv <= 2'b0;
         csr_crmd_ie  <= 1'b0;
+        csr_crmd_da  <= 1'b1;
     end
     else if (wb_ex)begin
         csr_crmd_plv <= 2'b0;
@@ -42,12 +44,12 @@ module csr(
     end
   end
 
-  assign csr_crmd_rvalue = {28'b0, 1'b1, csr_crmd_ie, csr_crmd_plv};
+  assign csr_crmd_rvalue = {28'b0, csr_crmd_da, csr_crmd_ie, csr_crmd_plv};
 
 //PRMD
   wire [31:0] csr_prmd_rvalue;
-  reg  [ 1:0] csr_prmd_pie;
-  reg         csr_prmd_pplv;
+  reg         csr_prmd_pie;
+  reg  [ 1:0] csr_prmd_pplv;
 
   always @(posedge clk) begin
     if (wb_ex) begin
@@ -55,10 +57,10 @@ module csr(
         csr_prmd_pie  <= csr_crmd_ie;
     end
     else if (csr_we && csr_num==`CSR_PRMD) begin
-        csr_prmd_pplv <= csr_wmask[`CSR_PRMD_PPLV]&csr_wvalue[`CSR_PRMD_PPLV] 
-                      | ~csr_wmask[`CSR_PRMD_PPLV]&csr_prmd_pplv;
-        csr_prmd_pie <= csr_wmask[`CSR_PRMD_PIE]&csr_wvalue[`CSR_PRMD_PIE] 
-                      | ~csr_wmask[`CSR_PRMD_PIE]&csr_prmd_pie;
+        csr_prmd_pplv <= csr_wmask[`CSR_PRMD_PPLV] & csr_wvalue[`CSR_PRMD_PPLV] 
+                      | ~csr_wmask[`CSR_PRMD_PPLV] & csr_prmd_pplv;
+        csr_prmd_pie <= csr_wmask[`CSR_PRMD_PIE] & csr_wvalue[`CSR_PRMD_PIE] 
+                      | ~csr_wmask[`CSR_PRMD_PIE] & csr_prmd_pie;
     end
   end
 

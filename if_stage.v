@@ -47,7 +47,7 @@ assign nextpc       = fs_flush_pipe ? ws_to_fs_bus :
 // IF stage
 assign fs_ready_go    = 1'b1;
 assign fs_allowin     = !fs_valid || fs_ready_go && ds_allowin;
-assign fs_to_ds_valid =  fs_valid && fs_ready_go && ~fs_flush_pipe;
+assign fs_to_ds_valid =  fs_valid && fs_ready_go && ~fs_flush_pipe && ~br_taken;
 always @(posedge clk) begin
     if (reset) begin
         fs_valid <= 1'b0;
