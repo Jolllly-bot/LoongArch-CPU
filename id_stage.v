@@ -323,7 +323,7 @@ assign inst_syscall = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & 
 assign id_csr_num = inst_ertn ? `CSR_ERA 
                   : inst_syscall ? `CSR_EENTRY
                   : ds_inst[23:10];
-assign id_csr_re = inst_csrrd | inst_csrxchg;
+assign id_csr_re = inst_csrrd | inst_csrwr | inst_csrxchg;
 assign id_csr_we = inst_csrwr | inst_csrxchg;
 assign id_csr_wmask = inst_csrxchg ? rj_value : {32{1'b1}};
 
@@ -382,7 +382,7 @@ assign jirl_offs = {{14{i16[15]}}, i16[15:0], 2'b0};
 
 
 assign src_reg_is_rd = inst_beq | inst_bne | inst_blt | inst_bge | inst_bltu | inst_bgeu 
-                     | inst_st_w | inst_st_b | inst_st_h;
+                     | inst_st_w | inst_st_b | inst_st_h | inst_csrrd | inst_csrxchg;
 
 assign src1_is_pc    = inst_jirl | inst_bl | inst_pcaddu12i;
 
