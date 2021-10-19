@@ -30,7 +30,7 @@ wire [31:0] nextpc;
 
 wire         br_taken;
 wire [ 31:0] br_target;
-assign {br_taken,br_target} = br_bus;
+assign {br_taken,br_taken_cancel,br_target} = br_bus;
 
 wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
@@ -55,7 +55,7 @@ always @(posedge clk) begin
     else if (fs_allowin) begin
         fs_valid <= to_fs_valid;
     end
-    else if (br_taken) begin
+    else if (br_taken_cancel) begin
         fs_valid <= 1'b0;
     end
 

@@ -61,7 +61,7 @@ assign {ws_csr_wvalue,
 wire        rf_we;
 wire [4 :0] rf_waddr;
 wire [31:0] rf_wdata;
-assign ws_to_rf_bus = {ws_csr_re,
+assign ws_to_rf_bus = {ws_csr_re && ws_valid,
                        rf_we   ,  //37:37
                        rf_waddr,  //36:32
                        rf_wdata   //31:0

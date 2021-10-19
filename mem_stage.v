@@ -74,7 +74,7 @@ wire ms_fwd_valid;
 
 assign ms_fwd_valid = ms_valid && ms_gr_we;
 
-assign ms_fwd_bus = {ms_csr_re,
+assign ms_fwd_bus = {ms_csr_re && ms_valid,
                      ms_fwd_valid   , //37:37
                      ms_dest        , //36:32
                      ms_final_result  //31:0

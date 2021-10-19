@@ -116,7 +116,7 @@ wire es_blk_valid;
 
 assign es_fwd_valid = es_valid && es_gr_we;
 assign es_blk_valid = es_valid && es_res_from_mem;
-assign es_fwd_bus = {es_csr_re    ,
+assign es_fwd_bus = {es_csr_re && es_valid ,
                      es_fwd_valid ,   //38:38
                      es_blk_valid ,   //37:37
                      es_dest      ,   //36:32

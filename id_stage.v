@@ -46,6 +46,7 @@ assign {ws_csr_re,
        } = ws_to_rf_bus;
 
 wire        br_taken;
+wire        br_taken_cancel;
 wire [31:0] br_target;
 
 wire [ 4:0] load_op;
@@ -167,7 +168,7 @@ wire [32:0] rj_sub_rd;
 wire        rj_lt_rd;
 wire        rj_ltu_rd;
 
-assign br_bus       = {br_taken,br_target};
+assign br_bus       = {br_taken,br_taken_cancel,br_target};
 
 assign ds_to_es_bus = {inst_ertn,
                        inst_syscall,
@@ -226,6 +227,7 @@ assign {es_csr_re   ,
         es_dest     ,
         es_data
        } = es_fwd_bus;
+       
 assign {ms_csr_re    ,
         ms_fwd_valid,
         ms_dest     ,
@@ -242,7 +244,7 @@ always @(posedge clk) begin
     if (reset) begin
         ds_valid <= 1'b0;
     end
-    else if (br_taken) begin
+    else if (br_taken_cancel) begin
         ds_valid <= 1'b0;
     end
     else if (ds_allowin) begin
@@ -253,6 +255,8 @@ always @(posedge clk) begin
         fs_to_ds_bus_r  <= fs_to_ds_bus;
     end
 end
+
+assign br_taken_cancel = br_taken && ds_ready_go;
 
 assign op_31_26  = ds_inst[31:26];
 assign op_25_22  = ds_inst[25:22];
