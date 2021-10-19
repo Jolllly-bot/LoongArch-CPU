@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 `include "mycpu.h"
 
 module csr(
