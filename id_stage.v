@@ -36,7 +36,11 @@ assign {ds_inst,
 wire        rf_we   ;
 wire [ 4:0] rf_waddr;
 wire [31:0] rf_wdata;
-assign {rf_we   ,  //37:37
+wire ws_csr_re;
+wire ms_csr_re;
+wire es_csr_re;
+assign {ws_csr_re,
+        rf_we   ,  //37:37
         rf_waddr,  //36:32
         rf_wdata   //31:0
        } = ws_to_rf_bus;
@@ -206,24 +210,32 @@ wire id_csr_we;
 wire id_csr_re;
 wire [31:0] id_csr_wmask;
 
+wire csr_blk;
 
+assign csr_blk = (ws_csr_re && ((rf_waddr == rf_raddr1) || (rf_waddr == rf_raddr2)))
+                | (es_csr_re && ((es_dest == rf_raddr1) || (es_dest == rf_raddr2)))
+                | (ms_csr_re && ((ms_dest == rf_raddr1) || (ms_dest == rf_raddr2)));
 
 wire        es_rf_eq;
 wire        ms_rf_eq;
 wire        wb_rf_eq;
 
-assign {es_fwd_valid,
+assign {es_csr_re   ,
+        es_fwd_valid,
         es_blk_valid,
         es_dest     ,
         es_data
        } = es_fwd_bus;
-assign {ms_fwd_valid,
+assign {ms_csr_re    ,
+        ms_fwd_valid,
         ms_dest     ,
         ms_data     
         } = ms_fwd_bus;
 
 
-assign ds_ready_go    = !(es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2));
+assign ds_ready_go    = (!(es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2))) && !csr_blk;
+
+
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
 assign ds_to_es_valid = ds_valid && ds_ready_go && ~ds_flush_pipe;
 always @(posedge clk) begin

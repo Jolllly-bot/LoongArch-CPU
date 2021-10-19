@@ -16,8 +16,7 @@ module mem_stage(
     output [`MS_FWD_BUS_WD   -1:0] ms_fwd_bus    ,
     //from data-sram
     input  [31                 :0] data_sram_rdata,
-    input  ms_flush_pipe,
-    output ms_ex
+    input ms_flush_pipe
 );
 
 reg         ms_valid;
@@ -38,7 +37,6 @@ wire [31:0] ms_csr_wmask;
 wire ms_ertn;
 wire ms_syscall;
 wire [31:0] ms_csr_wvalue;
-wire ms_ex;
 
 assign {ms_csr_wvalue,
         ms_ertn,
@@ -54,8 +52,6 @@ assign {ms_csr_wvalue,
         ms_alu_result  ,  //63:32
         ms_pc             //31:0
        } = es_to_ms_bus_r;
-
-assign ms_ex = (ms_ertn || ms_syscall) && ms_valid;
 
 wire [31:0] mem_result;
 wire [31:0] ms_final_result;
@@ -77,7 +73,9 @@ assign ms_to_ws_bus = {ms_csr_wvalue,
 wire ms_fwd_valid;
 
 assign ms_fwd_valid = ms_valid && ms_gr_we;
-assign ms_fwd_bus = {ms_fwd_valid   , //37:37
+
+assign ms_fwd_bus = {ms_csr_re,
+                     ms_fwd_valid   , //37:37
                      ms_dest        , //36:32
                      ms_final_result  //31:0
                     };

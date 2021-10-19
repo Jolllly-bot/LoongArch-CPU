@@ -19,8 +19,7 @@ module exe_stage(
     output [ 3:0] data_sram_wen  ,
     output [31:0] data_sram_addr ,
     output [31:0] data_sram_wdata,
-    input         es_flush_pipe  ,
-    input         ms_ex
+    input         es_flush_pipe
 );
 
 reg         es_valid      ;
@@ -53,13 +52,12 @@ wire        es_div_unsigned;
 wire        es_div_mod     ;
 
 wire [13:0] es_csr_num;
-wire        es_csr_we;
-wire        es_csr_re;
+wire es_csr_we;
+wire es_csr_re;
 wire [31:0] es_csr_wmask;
-wire        es_ertn;
-wire        es_syscall;
+wire es_ertn;
+wire es_syscall;
 wire [31:0] es_csr_wvalue;
-wire        no_ex;
 
 assign {es_ertn,
         es_syscall,
@@ -118,7 +116,8 @@ wire es_blk_valid;
 
 assign es_fwd_valid = es_valid && es_gr_we;
 assign es_blk_valid = es_valid && es_res_from_mem;
-assign es_fwd_bus = {es_fwd_valid ,   //38:38
+assign es_fwd_bus = {es_csr_re    ,
+                     es_fwd_valid ,   //38:38
                      es_blk_valid ,   //37:37
                      es_dest      ,   //36:32
                      es_alu_result    //31:0
@@ -309,10 +308,8 @@ assign es_st_strb = { 4{es_st_op[0]}} & (4'b0001 << es_vaddr)
                   | { 4{es_st_op[1]}} & (4'b0011 << es_vaddr)
                   | { 4{es_st_op[2]}} & 4'b1111;
 
-assign es_st_ex = es_syscall || es_ertn || ms_ex || es_flush_pipe; // from exe, mem, wb
-
 assign data_sram_en    = (es_res_from_mem || es_mem_we) && es_valid;
-assign data_sram_wen   = (es_mem_we && ~es_st_ex) ? es_st_strb : 4'h0;
+assign data_sram_wen   = es_mem_we ? es_st_strb : 4'h0;
 assign data_sram_addr  = {es_alu_result[31:2], 2'b0};
 assign data_sram_wdata = es_st_data;
 

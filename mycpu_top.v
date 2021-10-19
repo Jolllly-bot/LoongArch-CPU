@@ -103,8 +103,7 @@ exe_stage exe_stage(
     .data_sram_wen  (data_sram_wen  ),
     .data_sram_addr (data_sram_addr ),
     .data_sram_wdata(data_sram_wdata),
-    .es_flush_pipe  (ws_flush_pipe  ),
-    .ms_ex          (ms_ex)
+    .es_flush_pipe  (ws_flush_pipe)
 );
 // MEM stage
 mem_stage mem_stage(
@@ -123,8 +122,7 @@ mem_stage mem_stage(
     .ms_fwd_bus     (ms_fwd_bus     ),
     //from data-sram
     .data_sram_rdata(data_sram_rdata),
-    .ms_flush_pipe  (ws_flush_pipe),
-    .ms_ex          (ms_ex)
+    .ms_flush_pipe  (ws_flush_pipe)
 );
 // WB stage
 wb_stage wb_stage(

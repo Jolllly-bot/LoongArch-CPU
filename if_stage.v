@@ -16,7 +16,7 @@ module if_stage(
     output [31:0] inst_sram_addr ,
     output [31:0] inst_sram_wdata,
     input  [31:0] inst_sram_rdata,
-    input  [32:0] ws_to_fs_bus   ,
+    input  [31:0] ws_to_fs_bus   ,
     input         fs_flush_pipe
 );
 
