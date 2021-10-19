@@ -16,7 +16,8 @@ module if_stage(
     output [31:0] inst_sram_addr ,
     output [31:0] inst_sram_wdata,
     input  [31:0] inst_sram_rdata,
-    input  [32:0] ws_to_fs_bus
+    input  [32:0] ws_to_fs_bus   ,
+    input         fs_flush_pipe
 );
 
 reg         fs_valid;
@@ -39,13 +40,14 @@ assign fs_to_ds_bus = {fs_inst ,
 // pre-IF stage
 assign to_fs_valid  = ~reset;
 assign seq_pc       = fs_pc + 3'h4;
-assign nextpc       = /*ws_to_fs_bus[32] ? ws_to_fs_bus[31:0] : */
-                      br_taken ? br_target : seq_pc; 
+assign nextpc       = fs_flush_pipe ? ws_to_fs_bus : 
+                      br_taken ? br_target 
+                      : seq_pc; 
 
 // IF stage
 assign fs_ready_go    = 1'b1;
 assign fs_allowin     = !fs_valid || fs_ready_go && ds_allowin;
-assign fs_to_ds_valid =  fs_valid && fs_ready_go;
+assign fs_to_ds_valid =  fs_valid && fs_ready_go && ~fs_flush_pipe;
 always @(posedge clk) begin
     if (reset) begin
         fs_valid <= 1'b0;

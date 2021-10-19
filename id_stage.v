@@ -18,7 +18,9 @@ module id_stage(
     //to fs
     output [`BR_BUS_WD       -1:0] br_bus        ,
     //to rf: for write back
-    input  [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus  
+    input  [`WS_TO_RF_BUS_WD -1:0] ws_to_rf_bus  ,
+    //exception
+    input        ds_flush_pipe
 );
 
 reg         ds_valid   ;
@@ -223,7 +225,7 @@ assign {ms_fwd_valid,
 
 assign ds_ready_go    = !(es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2));
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
-assign ds_to_es_valid = ds_valid && ds_ready_go;
+assign ds_to_es_valid = ds_valid && ds_ready_go && ~ds_flush_pipe;
 always @(posedge clk) begin
     if (reset) begin
         ds_valid <= 1'b0;

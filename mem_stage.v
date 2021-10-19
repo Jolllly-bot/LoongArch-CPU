@@ -15,7 +15,8 @@ module mem_stage(
     //forward
     output [`MS_FWD_BUS_WD   -1:0] ms_fwd_bus    ,
     //from data-sram
-    input  [31                 :0] data_sram_rdata
+    input  [31                 :0] data_sram_rdata,
+    input ms_flush_pipe
 );
 
 reg         ms_valid;
@@ -79,7 +80,7 @@ assign ms_fwd_bus = {ms_fwd_valid   , //37:37
 
 assign ms_ready_go    = 1'b1;
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
-assign ms_to_ws_valid = ms_valid && ms_ready_go;
+assign ms_to_ws_valid = ms_valid && ms_ready_go && ~ms_flush_pipe;
 always @(posedge clk) begin
     if (reset) begin
         ms_valid <= 1'b0;

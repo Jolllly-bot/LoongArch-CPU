@@ -18,7 +18,8 @@ module exe_stage(
     output        data_sram_en   ,
     output [ 3:0] data_sram_wen  ,
     output [31:0] data_sram_addr ,
-    output [31:0] data_sram_wdata
+    output [31:0] data_sram_wdata,
+    input         es_flush_pipe
 );
 
 reg         es_valid      ;
@@ -125,7 +126,7 @@ assign es_ready_go    = (~(es_div_signed | es_div_unsigned))
                         | (es_div_signed & signed_dout_tvalid) 
                         | (es_div_unsigned & unsigned_dout_tvalid);
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
-assign es_to_ms_valid =  es_valid && es_ready_go;
+assign es_to_ms_valid =  es_valid && es_ready_go && ~es_flush_pipe;
 always @(posedge clk) begin
     if (reset) begin     
         es_valid <= 1'b0;

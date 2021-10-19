@@ -15,7 +15,8 @@ module wb_stage(
     output [ 3:0] debug_wb_rf_wen ,
     output [ 4:0] debug_wb_rf_wnum,
     output [31:0] debug_wb_rf_wdata,
-    output [32:0] ws_to_fs_bus
+    output [31:0] ws_to_fs_bus,
+    output        ws_flush_pipe
 );
 
 reg         ws_valid;
@@ -41,8 +42,7 @@ wire         wb_ex;
 wire  [ 5:0] wb_ecode;
 wire  [ 8:0] wb_esubcode;
 wire         eret_flush;
-
-
+wire         ws_flush_pipe;
 
 
 assign {ws_csr_wvalue,
@@ -98,7 +98,8 @@ assign wb_ecode = `ECODE_SYS;
 assign wb_esubcode = 9'b0;
 assign wb_ex = ws_syscall;
 
-assign ws_to_fs_bus = {(wb_ex|eret_flush) && ws_valid, ws_csr_rvalue};
+assign ws_flush_pipe = (wb_ex|eret_flush) && ws_valid;
+assign ws_to_fs_bus = ws_csr_rvalue;
 
 csr u_csr(
     .clk    (clk      ),
