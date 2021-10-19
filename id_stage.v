@@ -382,7 +382,7 @@ assign jirl_offs = {{14{i16[15]}}, i16[15:0], 2'b0};
 
 
 assign src_reg_is_rd = inst_beq | inst_bne | inst_blt | inst_bge | inst_bltu | inst_bgeu 
-                     | inst_st_w | inst_st_b | inst_st_h | inst_csrrd | inst_csrxchg;
+                     | inst_st_w | inst_st_b | inst_st_h | inst_csrwr | inst_csrxchg;
 
 assign src1_is_pc    = inst_jirl | inst_bl | inst_pcaddu12i;
 
