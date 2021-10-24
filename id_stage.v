@@ -358,7 +358,7 @@ assign inst_ertn    = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & 
 assign inst_syscall = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h16];
 assign inst_break   = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h14];
 
-assign ds_ex = ((inst_syscall || inst_break || ds_ex_ine || ds_has_int) || fs_ex) && ds_valid; //todo || fs_ex
+assign ds_ex = (inst_syscall || inst_break || ds_ex_ine || ds_has_int || fs_ex) && ds_valid;
 
 assign id_csr_num = inst_ertn ? `CSR_ERA 
                   : (inst_syscall || inst_break || ds_ex_ine || ds_has_int || fs_ex) ? `CSR_EENTRY

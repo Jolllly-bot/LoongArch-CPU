@@ -17,7 +17,7 @@ module mem_stage(
     //from data-sram
     input  [31                 :0] data_sram_rdata,
     input  ms_flush_pipe,
-    output ms_ex
+    output ms_to_es_ex
 );
 
 reg         ms_valid;
@@ -64,6 +64,7 @@ wire [31:0] mem_result;
 wire [31:0] ms_final_result;
 
 assign ms_ex = es_to_ms_ex && ms_valid; //TODO
+assign ms_to_es_ex = (es_to_ms_ex || ms_ertn) && ms_valid;
 
 assign ms_to_ws_bus = {ms_csr_subecode,
                        ms_ex       ,
