@@ -38,16 +38,18 @@ wire [31:0] ws_csr_wvalue;
 wire ws_ertn;
 wire ws_syscall;
 
-wire         wb_ex;
-wire  [ 5:0] wb_ecode;
+wire         ms_to_ws_ex;
+wire         ws_ex;
+wire  [ 5:0] ws_csr_ecode;
 wire  [ 8:0] wb_esubcode;
 wire         eret_flush;
 wire         ws_flush_pipe;
 
 
-assign {ws_csr_wvalue,
-        ws_ertn,
-        ws_syscall,
+assign {ms_to_ws_ex ,
+        ws_ertn     ,
+        ws_csr_wvalue,
+        ws_csr_ecode,
         ws_csr_re   ,
         ws_csr_we   ,
         ws_csr_num  ,
@@ -93,13 +95,12 @@ assign debug_wb_rf_wen   = {4{rf_we}};
 assign debug_wb_rf_wnum  = ws_dest;
 assign debug_wb_rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
 
+assign ws_ex = ms_to_ws_ex && ws_valid;
 assign eret_flush = ws_ertn && ws_valid;
-assign wb_ecode = `ECODE_SYS;
 
-assign wb_esubcode = 9'b0;
-assign wb_ex = ws_syscall && ws_valid;
+assign wb_esubcode = 9'b0; //TODO
 
-assign ws_flush_pipe = (wb_ex|eret_flush) && ws_valid;
+assign ws_flush_pipe = (ws_ex || eret_flush) && ws_valid;
 assign ws_to_fs_bus = ws_csr_rvalue;
 
 csr u_csr(
@@ -111,8 +112,8 @@ csr u_csr(
     .csr_we  (ws_csr_we),
     .csr_wmask(ws_csr_wmask),
     .csr_wvalue(ws_csr_wvalue),
-    .wb_ex(wb_ex),
-    .wb_ecode(wb_ecode),
+    .wb_ex(ws_ex),
+    .wb_ecode(ws_csr_ecode),
     .wb_esubcode(wb_esubcode),
     .eret_flush(eret_flush),
     .wb_pc(ws_pc)

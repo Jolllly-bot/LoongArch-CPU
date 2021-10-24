@@ -31,6 +31,8 @@ wire [ 4:0] ms_dest;
 wire [31:0] ms_alu_result;
 wire [31:0] ms_pc;
 
+wire es_to_ms_ex;
+wire ms_ex;
 wire [13:0] ms_csr_num;
 wire ms_csr_we;
 wire ms_csr_re;
@@ -38,11 +40,12 @@ wire [31:0] ms_csr_wmask;
 wire ms_ertn;
 wire ms_syscall;
 wire [31:0] ms_csr_wvalue;
-wire ms_ex;
+wire [ 5:0] ms_csr_ecode;
 
-assign {ms_csr_wvalue,
+assign {es_to_ms_ex  ,
         ms_ertn,
-        ms_syscall,
+        ms_csr_wvalue,
+        ms_csr_ecode,
         ms_csr_re   ,
         ms_csr_we   ,
         ms_csr_num  ,
@@ -58,9 +61,12 @@ assign {ms_csr_wvalue,
 wire [31:0] mem_result;
 wire [31:0] ms_final_result;
 
-assign ms_to_ws_bus = {ms_csr_wvalue,
-                       ms_ertn,
-                       ms_syscall,
+assign ms_ex = es_to_ms_ex && ms_valid; //TODO
+
+assign ms_to_ws_bus = {ms_ex       ,
+                       ms_ertn     ,
+                       ms_csr_wvalue,
+                       ms_csr_ecode,
                        ms_csr_re   ,
                        ms_csr_we   ,
                        ms_csr_num  ,
@@ -71,7 +77,6 @@ assign ms_to_ws_bus = {ms_csr_wvalue,
                        ms_pc             //31:0
                       };
 
-assign ms_ex = (ms_ertn || ms_syscall) && ms_valid;
 
 //ms forward path
 wire ms_fwd_valid;

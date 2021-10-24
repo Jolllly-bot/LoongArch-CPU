@@ -48,8 +48,8 @@ module csr(
 
 //PRMD
   wire [31:0] csr_prmd_rvalue;
-  reg         csr_prmd_pie;
   reg  [ 1:0] csr_prmd_pplv;
+  reg         csr_prmd_pie;
 
   always @(posedge clk) begin
     if (wb_ex) begin
