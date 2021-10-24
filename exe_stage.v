@@ -69,8 +69,9 @@ wire [ 5:0] es_csr_ecode;
 wire        es_st_ex;
 wire        es_ale_h;
 wire        es_ale_w;
-
-assign {es_csr_esubcode,
+wire [ 1:0] es_cnt_op;
+assign {es_cnt_op,
+        es_csr_esubcode,
         ds_to_es_ex ,
         es_ertn     ,
         ds_csr_ecode,
@@ -131,6 +132,11 @@ assign es_to_ms_bus = {es_vaddr    ,
 //forward path
 wire es_fwd_valid;
 wire es_blk_valid;
+wire [31:0] es_fwd_result;
+
+assign es_fwd_result = es_cnt_op[1] ? timer_cnt[63:32]
+                    : es_cnt_op[0] ? timer_cnt[31: 0]  
+                    : es_alu_result;
 
 assign es_fwd_valid = es_valid && es_gr_we;
 assign es_blk_valid = es_valid && es_res_from_mem;
@@ -138,7 +144,7 @@ assign es_fwd_bus = {es_csr_re && es_valid ,
                      es_fwd_valid ,   //38:38
                      es_blk_valid ,   //37:37
                      es_dest      ,   //36:32
-                     es_alu_result    //31:0
+                     es_result   //31:0
                     };
 
 assign es_ready_go    = es_flush_pipe || ((~(es_div_signed | es_div_unsigned)) 
@@ -306,6 +312,14 @@ begin
     
 end
 
+reg [63:0] timer_cnt;
+always @(posedge clk) begin
+    if (reset)
+        timer_cnt <= 64'h0;
+    else 
+        timer_cnt <= timer_cnt + 1'b1;
+end
+
 assign es_result = (es_mul_signed   &&  es_mul_high)? signed_prod[63:32] :
                    (es_mul_signed   && ~es_mul_high)? signed_prod[31:0] :
                    (es_mul_unsigned &&  es_mul_high)? unsigned_prod[63:32]:
@@ -313,7 +327,9 @@ assign es_result = (es_mul_signed   &&  es_mul_high)? signed_prod[63:32] :
                    (es_div_signed   && ~es_div_mod) ? signed_div_result[31:0]:
                    (es_div_unsigned &&  es_div_mod) ? unsigned_div_result[63:32]:
                    (es_div_unsigned && ~es_div_mod) ? unsigned_div_result[31:0] :
-                                                      es_alu_result;
+                   es_cnt_op[1] ? timer_cnt[63:32] :
+                   es_cnt_op[0] ? timer_cnt[31: 0] : 
+                   es_alu_result;
                                                       
 assign es_vaddr = es_alu_result;
 assign es_vaddr_type = es_vaddr[1:0];
