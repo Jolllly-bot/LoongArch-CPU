@@ -58,7 +58,7 @@ always @(posedge clk) begin
     else if (br_taken_cancel) begin
         fs_valid <= 1'b0;
     end
-
+    
     if (reset) begin
         fs_pc <= 32'h1bfffffc;  //trick: to make nextpc be 0x1c000000 during reset 
     end

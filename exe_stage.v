@@ -125,9 +125,9 @@ assign es_fwd_bus = {es_csr_re && es_valid ,
                      es_alu_result    //31:0
                     };
 
-assign es_ready_go    = (~(es_div_signed | es_div_unsigned)) 
+assign es_ready_go    = es_flush_pipe || ((~(es_div_signed | es_div_unsigned)) 
                         | (es_div_signed & signed_dout_tvalid) 
-                        | (es_div_unsigned & unsigned_dout_tvalid);
+                        | (es_div_unsigned & unsigned_dout_tvalid));
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go && ~es_flush_pipe;
 always @(posedge clk) begin
@@ -313,7 +313,7 @@ assign es_st_strb = { 4{es_st_op[0]}} & (4'b0001 << es_vaddr)
 assign es_st_ex = es_syscall || es_ertn || ms_ex || es_flush_pipe; // from exe, mem, wb
 
 assign data_sram_en    = (es_res_from_mem || es_mem_we) && es_valid;
-assign data_sram_wen   = (es_mem_we && ~es_st_ex) ? es_st_strb : 4'h0;
+assign data_sram_wen   = (es_mem_we && ~es_st_ex && ~es_flush_pipe) ? es_st_strb : 4'h0;
 assign data_sram_addr  = {es_alu_result[31:2], 2'b0};
 assign data_sram_wdata = es_st_data;
 

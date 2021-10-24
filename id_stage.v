@@ -235,7 +235,7 @@ assign {ms_csr_re    ,
         } = ms_fwd_bus;
 
 
-assign ds_ready_go    = (!(es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2))) && !csr_blk;
+assign ds_ready_go    = ds_flush_pipe ||  ( (!(es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2))) && !csr_blk);
 
 
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
