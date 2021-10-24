@@ -41,8 +41,10 @@ wire ms_ertn;
 wire ms_syscall;
 wire [31:0] ms_csr_wvalue;
 wire [ 5:0] ms_csr_ecode;
+wire [ 8:0] ms_csr_subecode;
 
-assign {es_to_ms_ex  ,
+assign {ms_csr_subecode ,
+        es_to_ms_ex  ,
         ms_ertn,
         ms_csr_wvalue,
         ms_csr_ecode,
@@ -63,7 +65,8 @@ wire [31:0] ms_final_result;
 
 assign ms_ex = es_to_ms_ex && ms_valid; //TODO
 
-assign ms_to_ws_bus = {ms_ex       ,
+assign ms_to_ws_bus = {ms_csr_subecode,
+                       ms_ex       ,
                        ms_ertn     ,
                        ms_csr_wvalue,
                        ms_csr_ecode,

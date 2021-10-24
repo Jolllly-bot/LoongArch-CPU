@@ -34,10 +34,18 @@ assign {br_taken,br_taken_cancel,br_target} = br_bus;
 
 wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
-assign fs_to_ds_bus = {fs_inst ,
+
+assign fs_to_ds_bus = {fs_ex,
+                       fs_inst ,
                        fs_pc   };
 
 // pre-IF stage
+wire fs_ex;
+wire fs_ex_adef;
+
+assign fs_ex = fs_valid && fs_ex_adef;
+assign fs_ex_adef = nextpc[1] || nextpc[0];
+
 assign to_fs_valid  = ~reset;
 assign seq_pc       = fs_pc + 3'h4;
 assign nextpc       = fs_flush_pipe ? ws_to_fs_bus : 

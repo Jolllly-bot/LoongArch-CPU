@@ -30,7 +30,9 @@ reg  [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus_r;
 
 wire [31:0] ds_inst;
 wire [31:0] ds_pc  ;
-assign {ds_inst,
+wire fs_ex;
+assign {fs_ex,
+        ds_inst,
         ds_pc  } = fs_to_ds_bus_r;
 
 wire        rf_we   ;
@@ -39,7 +41,8 @@ wire [31:0] rf_wdata;
 wire ws_csr_re;
 wire ms_csr_re;
 wire es_csr_re;
-assign {ws_csr_re,
+assign {ds_has_int,
+        ws_csr_re,
         rf_we   ,  //37:37
         rf_waddr,  //36:32
         rf_wdata   //31:0
@@ -176,11 +179,25 @@ wire        id_csr_we;
 wire        id_csr_re;
 wire [31:0] id_csr_wmask;
 wire [ 5:0] id_csr_ecode;
+wire [ 8:0] id_csr_esubcode;
 wire        csr_blk;
+wire        ds_has_int;
+
+wire        ds_ex_ine;
+
+assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   | inst_nor    | inst_and     | inst_or   
+                    | inst_xor       | inst_slli_w  | inst_srli_w  | inst_srai_w | inst_addi_w | inst_ld_w    | inst_st_w   
+                    | inst_jirl      | inst_b       | inst_bl      | inst_beq    | inst_bne    | inst_lu12i_w | inst_slti   
+                    | inst_sltui     | inst_andi    | inst_ori     | inst_xori   | inst_sll_w  | inst_srl_w   | inst_sra_w  
+                    | inst_mul_w     | inst_mulh_w  | inst_mulh_wu | inst_div_w  | inst_mod_w  | inst_div_wu  | inst_mod_wu
+                    | inst_pcaddu12i | inst_blt     | inst_bge     | inst_bltu   | inst_bgeu   | inst_ld_b    | inst_ld_h 
+                    | inst_ld_bu     | inst_ld_hu   | inst_st_b    | inst_st_h   | inst_csrrd  | inst_csrwr   | inst_csrxchg
+                    | inst_ertn      | inst_syscall | inst_break );
 
 assign br_bus       = {br_taken,br_taken_cancel,br_target};
 
-assign ds_to_es_bus = {ds_ex       ,
+assign ds_to_es_bus = {id_csr_esubcode,
+                       ds_ex       ,
                        inst_ertn   ,
                        id_csr_ecode,
                        id_csr_re   ,
@@ -341,14 +358,19 @@ assign inst_ertn    = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & 
 assign inst_syscall = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h16];
 assign inst_break   = op_31_26_d[6'h00] & op_25_22_d[4'h0] & op_21_20_d[2'h2] & op_19_15_d[5'h14];
 
-assign ds_ex = inst_syscall || inst_break; //todo || fs_ex
+assign ds_ex = ((inst_syscall || inst_break || ds_ex_ine || ds_has_int) || fs_ex) && ds_valid; //todo || fs_ex
 
 assign id_csr_num = inst_ertn ? `CSR_ERA 
-                  : (inst_syscall || inst_break) ? `CSR_EENTRY
+                  : (inst_syscall || inst_break || ds_ex_ine || ds_has_int || fs_ex) ? `CSR_EENTRY
                   : ds_inst[23:10];
-assign id_csr_ecode = inst_syscall ? `ECODE_SYS
+assign id_csr_ecode = ds_has_int   ? `ECODE_INT
+                    : fs_ex        ? `ECODE_ADE
+                    : ds_ex_ine    ? `ECODE_INE
+                    : inst_syscall ? `ECODE_SYS
                     : inst_break   ? `ECODE_BRK
                     : 6'h0;
+
+assign id_csr_esubcode = fs_ex ? `ESUBCODE_ADEF : 9'b0;
 assign id_csr_re = inst_csrrd | inst_csrwr | inst_csrxchg;
 assign id_csr_we = inst_csrwr | inst_csrxchg;
 assign id_csr_wmask = inst_csrxchg ? rj_value : {32{1'b1}};

@@ -45,8 +45,18 @@ wire  [ 8:0] wb_esubcode;
 wire         eret_flush;
 wire         ws_flush_pipe;
 
+wire ws_has_int;
+wire  [ 7:0] ws_hw_int_in;
+wire  ws_ipi_int_in;
+wire  [31:0] ws_coreid_in;
+wire  [31:0] ws_wb_vaddr;
 
-assign {ms_to_ws_ex ,
+assign ws_hw_int_in = 8'b0;
+assign ws_ipi_int_in = 1'b0;
+assign ws_coreid_in = 32'b0;
+
+assign {wb_esubcode,
+        ms_to_ws_ex ,
         ws_ertn     ,
         ws_csr_wvalue,
         ws_csr_ecode,
@@ -63,7 +73,8 @@ assign {ms_to_ws_ex ,
 wire        rf_we;
 wire [4 :0] rf_waddr;
 wire [31:0] rf_wdata;
-assign ws_to_rf_bus = {ws_csr_re && ws_valid,
+assign ws_to_rf_bus = {ws_has_int,
+                       ws_csr_re && ws_valid,
                        rf_we   ,  //37:37
                        rf_waddr,  //36:32
                        rf_wdata   //31:0
@@ -84,7 +95,7 @@ always @(posedge clk) begin
     end
 end
 
-assign rf_we    = (ws_gr_we || ws_csr_re) && ws_valid;
+assign rf_we    = (ws_gr_we || ws_csr_re) && ws_valid && ~ws_ex;
 assign rf_waddr = ws_dest;
 //---------------------------------------
 assign rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
@@ -98,7 +109,7 @@ assign debug_wb_rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
 assign ws_ex = ms_to_ws_ex && ws_valid;
 assign eret_flush = ws_ertn && ws_valid;
 
-assign wb_esubcode = 9'b0; //TODO
+//assign wb_esubcode = 9'b0; //TODO
 
 assign ws_flush_pipe = (ws_ex || eret_flush) && ws_valid;
 assign ws_to_fs_bus = ws_csr_rvalue;
@@ -116,7 +127,12 @@ csr u_csr(
     .wb_ecode(ws_csr_ecode),
     .wb_esubcode(wb_esubcode),
     .eret_flush(eret_flush),
-    .wb_pc(ws_pc)
+    .wb_pc(ws_pc),
+    .has_int(ws_has_int),
+    .hw_int_in(ws_hw_int_in),
+    .ipi_int_in(ws_ipi_int_in),
+    .coreid_in(ws_coreid_in),
+    .wb_vaddr(ws_wb_vaddr)
     );
 
 endmodule

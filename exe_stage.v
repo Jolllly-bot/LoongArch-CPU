@@ -62,9 +62,11 @@ wire es_ertn;
 wire es_syscall;
 wire [31:0] es_csr_wvalue;
 wire [ 5:0] es_csr_ecode;
+wire [ 8:0] es_csr_esubcode;
 wire        es_st_ex;
 
-assign {ds_to_es_ex ,
+assign {es_csr_esubcode,
+        ds_to_es_ex ,
         es_ertn     ,
         es_csr_ecode,
         es_csr_re   ,
@@ -102,11 +104,11 @@ reg  [3:0] divu_cycle     ;
 assign es_csr_wvalue = es_rkd_value;
 assign es_ex = ds_to_es_ex; //todo
 
-assign es_to_ms_bus = {es_ex       ,
+assign es_to_ms_bus = {es_csr_esubcode,
+                       es_ex       ,
                        es_ertn     ,
                        es_csr_wvalue,
-                       es_csr_
-                       ,
+                       es_csr_ecode,
                        es_csr_re   ,
                        es_csr_we   ,
                        es_csr_num  ,

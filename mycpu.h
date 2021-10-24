@@ -2,11 +2,11 @@
     `define MYCPU_H
 
     `define BR_BUS_WD       34
-    `define FS_TO_DS_BUS_WD 64
-    `define DS_TO_ES_BUS_WD 220
-    `define ES_TO_MS_BUS_WD 164
-    `define MS_TO_WS_BUS_WD 158
-    `define WS_TO_RF_BUS_WD 39
+    `define FS_TO_DS_BUS_WD 65
+    `define DS_TO_ES_BUS_WD 229
+    `define ES_TO_MS_BUS_WD 173
+    `define MS_TO_WS_BUS_WD 167
+    `define WS_TO_RF_BUS_WD 40
     `define ES_FWD_BUS_WD   40
     `define MS_FWD_BUS_WD   39
 
@@ -45,6 +45,9 @@
 
     `define CSR_TCFG_INITVAL 31:2
     `define CSR_TCFG_EN         0
+    `define CSR_TCFG_PERIODIC   1
+
+    `define CSR_TID_TID      31:0
 
     `define CSR_TICLR_CLR       0
     
