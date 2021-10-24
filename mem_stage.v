@@ -41,9 +41,11 @@ wire ms_ertn;
 wire ms_syscall;
 wire [31:0] ms_csr_wvalue;
 wire [ 5:0] ms_csr_ecode;
-wire [ 8:0] ms_csr_subecode;
+wire [ 8:0] ms_csr_esubcode;
+wire [31:0] ms_vaddr;
 
-assign {ms_csr_subecode ,
+assign {ms_vaddr,
+        ms_csr_esubcode ,
         es_to_ms_ex  ,
         ms_ertn,
         ms_csr_wvalue,
@@ -63,10 +65,11 @@ assign {ms_csr_subecode ,
 wire [31:0] mem_result;
 wire [31:0] ms_final_result;
 
-assign ms_ex = es_to_ms_ex && ms_valid; //TODO
+assign ms_ex = es_to_ms_ex && ms_valid; 
 assign ms_to_es_ex = (es_to_ms_ex || ms_ertn) && ms_valid;
 
-assign ms_to_ws_bus = {ms_csr_subecode,
+assign ms_to_ws_bus = {ms_vaddr,
+                       ms_csr_esubcode,
                        ms_ex       ,
                        ms_ertn     ,
                        ms_csr_wvalue,
@@ -109,30 +112,30 @@ always @(posedge clk) begin
     end
 end
 
-wire [ 3:0] ms_vaddr;
+wire [ 3:0] ms_vaddr_type;
 wire [31:0] lb_data;
 wire [31:0] lbu_data;
 wire [31:0] lh_data;
 wire [31:0] lhu_data;
 wire [31:0] lw_data;
 
-decoder_2_4 u_dec_ms(.in(ms_alu_result[1:0]), .out(ms_vaddr));
+decoder_2_4 u_dec_ms(.in(ms_alu_result[1:0]), .out(ms_vaddr_type));
 
-assign lb_data = {32{ms_vaddr[0]}} & {{24{data_sram_rdata[ 7]}}, data_sram_rdata[ 7: 0]}
-                |{32{ms_vaddr[1]}} & {{24{data_sram_rdata[15]}}, data_sram_rdata[15: 8]}
-                |{32{ms_vaddr[2]}} & {{24{data_sram_rdata[23]}}, data_sram_rdata[23:16]}
-                |{32{ms_vaddr[3]}} & {{24{data_sram_rdata[31]}}, data_sram_rdata[31:24]};
+assign lb_data = {32{ms_vaddr_type[0]}} & {{24{data_sram_rdata[ 7]}}, data_sram_rdata[ 7: 0]}
+                |{32{ms_vaddr_type[1]}} & {{24{data_sram_rdata[15]}}, data_sram_rdata[15: 8]}
+                |{32{ms_vaddr_type[2]}} & {{24{data_sram_rdata[23]}}, data_sram_rdata[23:16]}
+                |{32{ms_vaddr_type[3]}} & {{24{data_sram_rdata[31]}}, data_sram_rdata[31:24]};
 
-assign lbu_data = {32{ms_vaddr[0]}} & {24'b0, data_sram_rdata[ 7: 0]}
-                 |{32{ms_vaddr[1]}} & {24'b0, data_sram_rdata[15: 8]}
-                 |{32{ms_vaddr[2]}} & {24'b0, data_sram_rdata[23:16]}
-                 |{32{ms_vaddr[3]}} & {24'b0, data_sram_rdata[31:24]};
+assign lbu_data = {32{ms_vaddr_type[0]}} & {24'b0, data_sram_rdata[ 7: 0]}
+                 |{32{ms_vaddr_type[1]}} & {24'b0, data_sram_rdata[15: 8]}
+                 |{32{ms_vaddr_type[2]}} & {24'b0, data_sram_rdata[23:16]}
+                 |{32{ms_vaddr_type[3]}} & {24'b0, data_sram_rdata[31:24]};
 
-assign lh_data = {32{ ms_vaddr[0]}} & {{16{data_sram_rdata[15]}}, data_sram_rdata[15: 0]}
-                |{32{~ms_vaddr[0]}} & {{16{data_sram_rdata[31]}}, data_sram_rdata[31:16]};
+assign lh_data = {32{ ms_vaddr_type[0]}} & {{16{data_sram_rdata[15]}}, data_sram_rdata[15: 0]}
+                |{32{~ms_vaddr_type[0]}} & {{16{data_sram_rdata[31]}}, data_sram_rdata[31:16]};
 
-assign lhu_data = {32{ ms_vaddr[0]}} & {16'b0, data_sram_rdata[15: 0]}
-                 |{32{~ms_vaddr[0]}} & {16'b0, data_sram_rdata[31:16]};
+assign lhu_data = {32{ ms_vaddr_type[0]}} & {16'b0, data_sram_rdata[15: 0]}
+                 |{32{~ms_vaddr_type[0]}} & {16'b0, data_sram_rdata[31:16]};
 
 assign lw_data = data_sram_rdata;
 

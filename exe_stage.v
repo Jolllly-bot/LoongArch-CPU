@@ -43,7 +43,8 @@ wire [ 4:0] es_load_op     ;
 wire [ 2:0] es_st_op    ;
 wire [31:0] es_st_data     ;
 wire [ 3:0] es_st_strb     ;
-wire [ 1:0] es_vaddr       ;
+wire [31:0] es_vaddr       ;
+wire [ 1:0] es_vaddr_type  ;
 
 wire        es_mul_signed  ;
 wire        es_mul_unsigned;
@@ -54,6 +55,7 @@ wire        es_div_mod     ;
 
 wire es_ex;
 wire ds_to_es_ex;
+wire [13:0] ds_csr_num;
 wire [13:0] es_csr_num;
 wire es_csr_we;
 wire es_csr_re;
@@ -61,17 +63,20 @@ wire [31:0] es_csr_wmask;
 wire es_ertn;
 wire es_syscall;
 wire [31:0] es_csr_wvalue;
-wire [ 5:0] es_csr_ecode;
 wire [ 8:0] es_csr_esubcode;
+wire [ 5:0] ds_csr_ecode;
+wire [ 5:0] es_csr_ecode;
 wire        es_st_ex;
+wire        es_ale_h;
+wire        es_ale_w;
 
 assign {es_csr_esubcode,
         ds_to_es_ex ,
         es_ertn     ,
-        es_csr_ecode,
+        ds_csr_ecode,
         es_csr_re   ,
         es_csr_we   ,
-        es_csr_num  ,
+        ds_csr_num  ,
         es_csr_wmask,
         es_load_op     ,
         es_st_op    ,
@@ -102,9 +107,11 @@ reg  [3:0] div_cycle      ;
 reg  [3:0] divu_cycle     ;
 
 assign es_csr_wvalue = es_rkd_value;
-assign es_ex = ds_to_es_ex; //todo
 
-assign es_to_ms_bus = {es_csr_esubcode,
+assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
+
+assign es_to_ms_bus = {es_vaddr    ,
+                       es_csr_esubcode,
                        es_ex       ,
                        es_ertn     ,
                        es_csr_wvalue,
@@ -308,20 +315,26 @@ assign es_result = (es_mul_signed   &&  es_mul_high)? signed_prod[63:32] :
                    (es_div_unsigned && ~es_div_mod) ? unsigned_div_result[31:0] :
                                                       es_alu_result;
                                                       
-
-assign es_vaddr = es_alu_result[1:0];
+assign es_vaddr = es_alu_result;
+assign es_vaddr_type = es_vaddr[1:0];
 
 assign es_st_data = {32{es_st_op[0]}} & {4{es_rkd_value[ 7:0]}}
                   | {32{es_st_op[1]}} & {2{es_rkd_value[15:0]}}
                   | {32{es_st_op[2]}} & es_rkd_value;
 
-assign es_st_strb = { 4{es_st_op[0]}} & (4'b0001 << es_vaddr)
-                  | { 4{es_st_op[1]}} & (4'b0011 << es_vaddr)
+assign es_st_strb = { 4{es_st_op[0]}} & (4'b0001 << es_vaddr_type)
+                  | { 4{es_st_op[1]}} & (4'b0011 << es_vaddr_type)
                   | { 4{es_st_op[2]}} & 4'b1111;
 
-assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // from exe, mem, wb
+assign es_ale_h = es_vaddr_type[0] && (es_load_op[1] || es_load_op[4] || es_st_op[1]);
+assign es_ale_w = es_vaddr_type && (es_load_op[2] || es_st_op[2]);
 
-assign data_sram_en    = (es_res_from_mem || es_mem_we) && es_valid;
+assign es_csr_ecode = (es_ale_h || es_ale_w) ? `ECODE_ALE : ds_csr_ecode;
+assign es_csr_num = (es_ale_h || es_ale_w) ? `CSR_EENTRY : ds_csr_num;
+
+assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // exception from exe, mem, wb
+
+assign data_sram_en    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid;
 assign data_sram_wen   = (es_mem_we && ~es_st_ex && ~es_flush_pipe) ? es_st_strb : 4'h0;
 assign data_sram_addr  = {es_alu_result[31:2], 2'b0};
 assign data_sram_wdata = es_st_data;

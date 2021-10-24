@@ -49,13 +49,14 @@ wire ws_has_int;
 wire  [ 7:0] ws_hw_int_in;
 wire  ws_ipi_int_in;
 wire  [31:0] ws_coreid_in;
-wire  [31:0] ws_wb_vaddr;
+wire  [31:0] wb_vaddr;
 
 assign ws_hw_int_in = 8'b0;
 assign ws_ipi_int_in = 1'b0;
 assign ws_coreid_in = 32'b0;
 
-assign {wb_esubcode,
+assign {wb_vaddr,
+        wb_esubcode,
         ms_to_ws_ex ,
         ws_ertn     ,
         ws_csr_wvalue,
@@ -109,8 +110,6 @@ assign debug_wb_rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
 assign ws_ex = ms_to_ws_ex && ws_valid;
 assign eret_flush = ws_ertn && ws_valid;
 
-//assign wb_esubcode = 9'b0; //TODO
-
 assign ws_flush_pipe = (ws_ex || eret_flush) && ws_valid;
 assign ws_to_fs_bus = ws_csr_rvalue;
 
@@ -132,7 +131,7 @@ csr u_csr(
     .hw_int_in(ws_hw_int_in),
     .ipi_int_in(ws_ipi_int_in),
     .coreid_in(ws_coreid_in),
-    .wb_vaddr(ws_wb_vaddr)
+    .wb_vaddr(wb_vaddr)
     );
 
 endmodule
