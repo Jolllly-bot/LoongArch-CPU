@@ -15,15 +15,15 @@ module exe_stage(
     //forward
     output [`ES_FWD_BUS_WD   -1:0] es_fwd_bus    ,
     // data sram interface
-    output        data_ram_req,
-    output        data_ram_wr,
-    output [1 :0] data_ram_size,
-    output [3 :0] data_ram_wstrb,
-    output [31:0] data_ram_addr,
-    output [31:0] data_ram_wdata,
-    input         data_ram_addr_ok;
-    input         data_ram_data_ok,
-    input [31:0]  data_ram_rdata,
+    output        data_sram_req,
+    output        data_sram_wr,
+    output [1 :0] data_sram_size,
+    output [3 :0] data_sram_wstrb,
+    output [31:0] data_sram_addr,
+    output [31:0] data_sram_wdata,
+    input         data_sram_addr_ok,
+    input         data_sram_data_ok,
+    input [31:0]  data_sram_rdata,
     
     input         es_flush_pipe,
     input         ms_ex
@@ -356,10 +356,10 @@ assign es_csr_num = (es_ale_h || es_ale_w) ? `CSR_EENTRY : ds_csr_num;
 
 assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // exception from exe, mem, wb
 
-assign data_ram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid;
-assign data_ram_wr     =  es_mem_we && ~es_st_ex && ~es_flush_pipe;
-assign data_ram_wstrb  = (es_mem_we && ~es_st_ex && ~es_flush_pipe) ? es_st_strb : 4'h0;
-assign data_ram_addr  = es_alu_result;
-assign data_ram_wdata = es_st_data;
+assign data_sram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid;
+assign data_sram_wr     =  es_mem_we && ~es_st_ex && ~es_flush_pipe;
+assign data_sram_wstrb  = (es_mem_we && ~es_st_ex && ~es_flush_pipe) ? es_st_strb : 4'h0;
+assign data_sram_addr  = es_alu_result;
+assign data_sram_wdata = es_st_data;
 
 endmodule
