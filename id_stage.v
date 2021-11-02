@@ -282,7 +282,7 @@ always @(posedge clk) begin
     end
 end
 
-assign br_taken_cancel = br_taken && ds_ready_go;
+assign br_taken_cancel = br_taken && ds_ready_go && es_allowin;
 
 assign op_31_26  = ds_inst[31:26];
 assign op_25_22  = ds_inst[25:22];
