@@ -117,7 +117,8 @@ assign es_csr_wvalue = es_rkd_value;
 
 assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
 
-assign es_to_ms_bus = {es_vaddr    ,
+assign es_to_ms_bus = {es_mem_req  ,
+                       es_vaddr    ,
                        es_csr_esubcode,
                        es_ex       ,
                        es_ertn     ,
@@ -140,6 +141,10 @@ wire es_fwd_valid;
 wire es_blk_valid;
 wire [31:0] es_fwd_result;
 
+wire es_mem_req;
+
+assign es_mem_req = !((es_load_op==5'd0) && (es_st_op==3'd0));
+
 assign es_fwd_result = es_cnt_op[1] ? timer_cnt[63:32]
                     : es_cnt_op[0] ? timer_cnt[31: 0]  
                     : es_alu_result;
@@ -153,9 +158,9 @@ assign es_fwd_bus = {es_csr_re && es_valid ,
                      es_result   //31:0
                     };
 
-assign es_ready_go    = es_flush_pipe || ((~(es_div_signed | es_div_unsigned)) 
+assign es_ready_go    = (es_flush_pipe || ((~(es_div_signed | es_div_unsigned)) 
                         | (es_div_signed & signed_dout_tvalid) 
-                        | (es_div_unsigned & unsigned_dout_tvalid));
+                        | (es_div_unsigned & unsigned_dout_tvalid))) && ((data_sram_req && data_sram_addr_ok) || (!es_mem_req));
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go && ~es_flush_pipe;
 always @(posedge clk) begin
@@ -356,7 +361,11 @@ assign es_csr_num = (es_ale_h || es_ale_w) ? `CSR_EENTRY : ds_csr_num;
 
 assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // exception from exe, mem, wb
 
-assign data_sram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid;
+assign data_sram_size = ( es_load_op[2] || es_st_op[2] ) ? 2'd2 :
+                        ( es_load_op[1] || es_load_op[4] || es_st_op[1] ) ? 2'd1 :
+                        2'd0;
+
+assign data_sram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid && ms_allowin;
 assign data_sram_wr     =  es_mem_we && ~es_st_ex && ~es_flush_pipe;
 assign data_sram_wstrb  = (es_mem_we && ~es_st_ex && ~es_flush_pipe) ? es_st_strb : 4'h0;
 assign data_sram_addr  = es_alu_result;

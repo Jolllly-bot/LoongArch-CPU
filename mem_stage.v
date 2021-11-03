@@ -16,6 +16,7 @@ module mem_stage(
     output [`MS_FWD_BUS_WD   -1:0] ms_fwd_bus    ,
     //from data-sram
     input  [31                 :0] data_sram_rdata,
+    input                          data_sram_data_ok,
     input  ms_flush_pipe,
     output ms_to_es_ex
 );
@@ -43,8 +44,9 @@ wire [31:0] ms_csr_wvalue;
 wire [ 5:0] ms_csr_ecode;
 wire [ 8:0] ms_csr_esubcode;
 wire [31:0] ms_vaddr;
-
-assign {ms_vaddr,
+wire ms_mem_req;
+assign {ms_mem_req ,
+        ms_vaddr,
         ms_csr_esubcode ,
         es_to_ms_ex  ,
         ms_ertn,
@@ -88,15 +90,15 @@ assign ms_to_ws_bus = {ms_vaddr,
 //ms forward path
 wire ms_fwd_valid;
 
-assign ms_fwd_valid = ms_valid && ms_gr_we;
+assign ms_fwd_valid = ms_to_ws_valid && ms_gr_we;
 
-assign ms_fwd_bus = {ms_csr_re && ms_valid,
+assign ms_fwd_bus = {ms_csr_re && ms_to_ws_valid,
                      ms_fwd_valid   , //37:37
                      ms_dest        , //36:32
                      ms_final_result  //31:0
                     };
 
-assign ms_ready_go    = 1'b1;
+assign ms_ready_go    = data_sram_data_ok || (!ms_mem_req);
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
 assign ms_to_ws_valid = ms_valid && ms_ready_go && ~ms_flush_pipe;
 always @(posedge clk) begin

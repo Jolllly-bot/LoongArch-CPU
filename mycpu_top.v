@@ -141,6 +141,7 @@ mem_stage mem_stage(
     .ms_fwd_bus     (ms_fwd_bus     ),
     //from data-sram
     .data_sram_rdata(data_sram_rdata),
+    .data_sram_data_ok(data_sram_data_ok),
     .ms_flush_pipe  (ws_flush_pipe  ),
     .ms_to_es_ex    (ms_ex)
 );
