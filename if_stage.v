@@ -107,11 +107,11 @@ always @(posedge clk) begin
         fs_pc <= nextpc;
     end
 
-    if (reset) begin
+     if (reset) begin
         fs_inst_valid <= 1'b0;
         fs_inst_r <= 32'h0;
     end
-    else if (!fs_inst_valid && fs_valid && fs_ready_go && !ds_allowin) begin
+    else if ( /* !fs_inst_valid && */  fs_valid && fs_ready_go && !ds_allowin) begin
         fs_inst_valid <= 1'b1;
         fs_inst_r     <= inst_sram_rdata;
     end
@@ -119,9 +119,9 @@ always @(posedge clk) begin
          fs_inst_valid <= 1'b0;
     end
     else begin
-        fs_inst_valid <= fs_inst_valid;
-        fs_inst_r     <= fs_inst_r;
-    end
+        fs_inst_valid <= 1'b0;
+        fs_inst_r <= 32'h0;
+    end 
 
     if (reset) begin
         cancel_r <= 1'b0;
