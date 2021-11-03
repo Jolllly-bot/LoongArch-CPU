@@ -119,8 +119,8 @@ always @(posedge clk) begin
          fs_inst_valid <= 1'b0;
     end
     else begin
-        fs_inst_valid <= 1'b0;
-        fs_inst_r     <= 32'h0;
+        fs_inst_valid <= fs_inst_valid;
+        fs_inst_r     <= fs_inst_r;
     end
 
     if (reset) begin
