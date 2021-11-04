@@ -35,7 +35,10 @@ wire [31:0] nextpc;
 
 wire         br_taken;
 wire [ 31:0] br_target;
-assign {br_taken,br_taken_cancel,br_target} = br_bus;
+assign {br_stall,
+        br_taken,
+        br_taken_cancel,
+        br_target} = br_bus;
 
 reg         fs_inst_valid;
 reg  [31:0] fs_inst_r;
@@ -137,7 +140,7 @@ always @(posedge clk) begin
     end
 end
 
-assign inst_sram_req    = fs_allowin; //TODO: more complicated solution
+assign inst_sram_req    = fs_allowin && !br_stall; //TODO: more complicated solution
 assign inst_sram_wr     = 1'b0;
 assign inst_sram_wstrb  = 4'h0;
 assign inst_sram_addr   = nextpc; 

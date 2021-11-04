@@ -51,6 +51,7 @@ assign {ds_has_int,
 wire        br_taken;
 wire        br_taken_cancel;
 wire [31:0] br_target;
+wire        br_stall;
 
 wire [ 4:0] load_op;
 wire [ 2:0] store_op;
@@ -198,8 +199,6 @@ assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   
                     | inst_ld_bu     | inst_ld_hu   | inst_st_b    | inst_st_h   | inst_csrrd  | inst_csrwr   | inst_csrxchg
                     | inst_ertn      | inst_syscall | inst_break   |inst_rdcntvl_w | inst_rdcntvh_w| inst_rdcntid_w);
 
-assign br_bus       = {br_taken,br_taken_cancel,br_target};
-
 assign ds_to_es_bus = {cnt_op      ,
                        id_csr_esubcode,
                        ds_ex       ,
@@ -282,8 +281,6 @@ always @(posedge clk) begin
         fs_to_ds_bus_r  <= fs_to_ds_bus;
     end
 end
-
-assign br_taken_cancel = br_taken && ds_ready_go && es_allowin;
 
 assign op_31_26  = ds_inst[31:26];
 assign op_25_22  = ds_inst[25:22];
@@ -522,5 +519,14 @@ assign br_taken = (   inst_beq  &&  rj_eq_rd
                   
 assign br_target = (inst_beq || inst_bne || inst_bl || inst_b || inst_blt || inst_bge || inst_bltu || inst_bgeu) ? (ds_pc + br_offs) :
                                                    /*inst_jirl*/ (rj_value + jirl_offs);
+
+assign br_taken_cancel = br_taken && ds_ready_go && es_allowin;
+
+assign br_stall = es_blk_valid || ms_fwd_valid; //??
+
+assign br_bus       = {br_stall, 
+                       br_taken,
+                       br_taken_cancel,
+                       br_target};
 
 endmodule
