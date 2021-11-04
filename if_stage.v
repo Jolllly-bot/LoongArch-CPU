@@ -126,10 +126,10 @@ always @(posedge clk) begin
     if (reset) begin
         cancel_r <= 1'b0;
     end
-    else if (!inst_sram_data_ok  && !fs_inst_valid && (br_taken_cancel || fs_flush_pipe) && (to_fs_valid && !br_taken)) begin
+    else if (!inst_sram_data_ok  && !fs_inst_valid && br_taken_cancel && (to_fs_valid && !br_taken)) begin
         cancel_r <= 1'b1;
     end
-    else if (!inst_sram_data_ok && !fs_inst_valid && (br_taken_cancel || fs_flush_pipe) && !fs_allowin && !fs_ready_go) begin
+    else if (!inst_sram_data_ok && !fs_inst_valid && br_taken_cancel && !fs_allowin && !fs_ready_go) begin
         cancel_r <= 1'b1;
     end
     else if (inst_sram_data_ok) begin
