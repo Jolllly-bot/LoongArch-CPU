@@ -149,14 +149,14 @@ assign es_fwd_result = es_cnt_op[1] ? timer_cnt[63:32]
                     : es_cnt_op[0] ? timer_cnt[31: 0]  
                     : es_alu_result;
 
-assign es_fwd_valid = es_valid && es_gr_we;
+assign es_fwd_valid = es_to_ms_valid && es_gr_we;
 
-assign es_blk_valid = es_valid && es_res_from_mem ? 1'b1 :
+assign es_blk_valid = es_to_ms_valid && es_res_from_mem ? 1'b1 :
                       data_sram_process && es_res_from_mem ? 1'b1 :
                       1'b0;
 
 
-assign es_fwd_bus = {es_csr_re && es_valid ,
+assign es_fwd_bus = {es_csr_re && es_to_ms_valid ,
                      es_fwd_valid ,   //38:38
                      es_blk_valid ,   //37:37
                      es_dest      ,   //36:32
