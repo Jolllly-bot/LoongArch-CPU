@@ -150,7 +150,12 @@ assign es_fwd_result = es_cnt_op[1] ? timer_cnt[63:32]
                     : es_alu_result;
 
 assign es_fwd_valid = es_valid && es_gr_we;
-assign es_blk_valid = es_valid && es_res_from_mem;
+
+assign es_blk_valid = es_valid && es_res_from_mem ? 1'b1 :
+                      data_sram_process && es_res_from_mem ? 1'b1 :
+                      1'b0;
+
+
 assign es_fwd_bus = {es_csr_re && es_valid ,
                      es_fwd_valid ,   //38:38
                      es_blk_valid ,   //37:37
@@ -365,7 +370,19 @@ assign data_sram_size = ( es_load_op[2] || es_st_op[2] ) ? 2'd2 :
                         ( es_load_op[1] || es_load_op[4] || es_st_op[1] ) ? 2'd1 :
                         2'd0;
 
-assign data_sram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid && ms_allowin;
+reg data_sram_process;
+always@(posedge clk) begin
+    if(reset) begin
+        data_sram_process <= 1'b0;
+    end
+    else if(data_sram_addr_ok && data_sram_req) begin
+        data_sram_process <= 1'b1;
+    end
+    else if(data_sram_data_ok) begin
+        data_sram_process <= 1'b0;
+    end
+end
+assign data_sram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid && ms_allowin /* && ~data_sram_process */;
 assign data_sram_wr     =  es_mem_we && ~es_st_ex && ~es_flush_pipe;
 assign data_sram_wstrb  = (es_mem_we && ~es_st_ex && ~es_flush_pipe) ? es_st_strb : 4'h0;
 assign data_sram_addr  = es_alu_result;

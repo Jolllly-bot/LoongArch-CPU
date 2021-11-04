@@ -96,7 +96,7 @@ always @(posedge clk) begin
     else if (fs_allowin) begin
         fs_valid <= to_fs_valid;
     end
-    else if (br_taken_cancel) begin
+    else if (br_taken_cancel /* || fs_flush_pipe */) begin
         fs_valid <= 1'b0;
     end
 
@@ -111,7 +111,7 @@ always @(posedge clk) begin
         fs_inst_valid <= 1'b0;
         fs_inst_r <= 32'h0;
     end
-    else if ( /* !fs_inst_valid && */  fs_valid && fs_ready_go && !ds_allowin) begin
+    else if (  !fs_inst_valid &&   fs_valid && fs_ready_go && !ds_allowin) begin
         fs_inst_valid <= 1'b1;
         fs_inst_r     <= inst_sram_rdata;
     end
