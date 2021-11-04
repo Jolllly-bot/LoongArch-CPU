@@ -382,7 +382,7 @@ always@(posedge clk) begin
         data_sram_process <= 1'b0;
     end
 end
-assign data_sram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid && ms_allowin;
+assign data_sram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid && ms_allowin /* && ~data_sram_process */;
 assign data_sram_wr     =  es_mem_we && ~es_st_ex && ~es_flush_pipe;
 assign data_sram_wstrb  = (es_mem_we && ~es_st_ex && ~es_flush_pipe) ? es_st_strb : 4'h0;
 assign data_sram_addr  = es_alu_result;
