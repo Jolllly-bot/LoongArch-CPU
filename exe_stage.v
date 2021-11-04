@@ -143,7 +143,7 @@ wire [31:0] es_fwd_result;
 
 wire es_mem_req;
 
-assign es_mem_req = !((es_load_op==5'd0) && (es_st_op==3'd0));
+assign es_mem_req = es_res_from_mem || es_mem_we;
 
 assign es_fwd_result = es_cnt_op[1] ? timer_cnt[63:32]
                     : es_cnt_op[0] ? timer_cnt[31: 0]  
@@ -163,9 +163,14 @@ assign es_fwd_bus = {es_csr_re && es_to_ms_valid ,
                      es_result   //31:0
                     };
 
-assign es_ready_go    = (es_flush_pipe || ((~(es_div_signed | es_div_unsigned)) 
-                        | (es_div_signed & signed_dout_tvalid) 
-                        | (es_div_unsigned & unsigned_dout_tvalid))) && ((data_sram_req && data_sram_addr_ok) || (!es_mem_req));
+wire es_div_valid;
+assign es_div_valid = (~(es_div_signed | es_div_unsigned)) 
+                     | (es_div_signed & signed_dout_tvalid) 
+                     | (es_div_unsigned & unsigned_dout_tvalid);
+
+assign es_ready_go    = (es_flush_pipe || es_div_valid) 
+                     && ((data_sram_req && data_sram_addr_ok) || !es_mem_req || es_ale_h || es_ale_w);
+
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go && ~es_flush_pipe;
 always @(posedge clk) begin

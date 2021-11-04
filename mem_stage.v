@@ -98,7 +98,7 @@ assign ms_fwd_bus = {ms_csr_re && ms_to_ws_valid,
                      ms_final_result  //31:0
                     };
 
-assign ms_ready_go    = data_sram_data_ok || !ms_mem_req;
+assign ms_ready_go    = data_sram_data_ok || !ms_mem_req || es_to_ms_ex;
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
 assign ms_to_ws_valid = ms_valid && ms_ready_go && ~ms_flush_pipe;
 always @(posedge clk) begin
