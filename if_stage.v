@@ -96,7 +96,7 @@ always @(posedge clk) begin
     else if (fs_allowin) begin
         fs_valid <= to_fs_valid;
     end
-    else if (br_taken_cancel /* || fs_flush_pipe */) begin
+    else if (br_taken_cancel  || fs_flush_pipe ) begin
         fs_valid <= 1'b0;
     end
 
