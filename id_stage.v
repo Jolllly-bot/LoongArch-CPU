@@ -265,12 +265,12 @@ assign ds_ready_go    = ds_flush_pipe ||  ( (!(es_blk_valid && (es_dest == rf_ra
 
 
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
-assign ds_to_es_valid = ds_valid && ds_ready_go && ~ds_flush_pipe;
+assign ds_to_es_valid = ds_valid && ds_ready_go;
 always @(posedge clk) begin
     if (reset) begin
         ds_valid <= 1'b0;
     end
-    else if (br_taken_cancel) begin
+    else if (br_taken_cancel || ds_flush_pipe) begin
         ds_valid <= 1'b0;
     end
     else if (ds_allowin) begin

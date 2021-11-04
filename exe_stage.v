@@ -167,9 +167,12 @@ assign es_ready_go    = (es_flush_pipe || ((~(es_div_signed | es_div_unsigned))
                         | (es_div_signed & signed_dout_tvalid) 
                         | (es_div_unsigned & unsigned_dout_tvalid))) && ((data_sram_req && data_sram_addr_ok) || (!es_mem_req));
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
-assign es_to_ms_valid =  es_valid && es_ready_go && ~es_flush_pipe;
+assign es_to_ms_valid =  es_valid && es_ready_go;
 always @(posedge clk) begin
     if (reset) begin     
+        es_valid <= 1'b0;
+    end
+    else if (es_flush_pipe) begin
         es_valid <= 1'b0;
     end
     else if (es_allowin) begin 

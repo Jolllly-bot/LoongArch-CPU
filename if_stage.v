@@ -88,7 +88,7 @@ end
 // IF stage
 assign fs_ready_go    = ((fs_valid && inst_sram_data_ok) || fs_inst_valid ) && !cancel_r;
 assign fs_allowin     = !fs_valid || fs_ready_go && ds_allowin;
-assign fs_to_ds_valid =  fs_valid && fs_ready_go && ~fs_flush_pipe;
+assign fs_to_ds_valid =  fs_valid && fs_ready_go;
 always @(posedge clk) begin
     if (reset) begin
         fs_valid <= 1'b0;
@@ -129,7 +129,7 @@ always @(posedge clk) begin
     else if (!inst_sram_data_ok  && !fs_inst_valid && br_taken_cancel && (to_fs_valid && !br_taken)) begin
         cancel_r <= 1'b1;
     end
-    else if (!inst_sram_data_ok && !fs_inst_valid && br_taken_cancel && !fs_allowin && !fs_ready_go) begin
+    else if (!inst_sram_data_ok && !fs_inst_valid && (br_taken_cancel || fs_flush_pipe) && !fs_allowin && !fs_ready_go) begin
         cancel_r <= 1'b1;
     end
     else if (inst_sram_data_ok) begin

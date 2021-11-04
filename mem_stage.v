@@ -67,8 +67,8 @@ assign {ms_mem_req ,
 wire [31:0] mem_result;
 wire [31:0] ms_final_result;
 
-assign ms_ex = es_to_ms_ex && ms_valid; 
-assign ms_to_es_ex = (es_to_ms_ex || ms_ertn) && ms_valid;
+assign ms_ex = es_to_ms_ex && ms_to_ws_valid; 
+assign ms_to_es_ex = (es_to_ms_ex || ms_ertn) && ms_to_ws_valid;
 
 assign ms_to_ws_bus = {ms_vaddr,
                        ms_csr_esubcode,
@@ -98,11 +98,14 @@ assign ms_fwd_bus = {ms_csr_re && ms_to_ws_valid,
                      ms_final_result  //31:0
                     };
 
-assign ms_ready_go    = data_sram_data_ok || (!ms_mem_req);
+assign ms_ready_go    = data_sram_data_ok || !ms_mem_req;
 assign ms_allowin     = !ms_valid || ms_ready_go && ws_allowin;
-assign ms_to_ws_valid = ms_valid && ms_ready_go && ~ms_flush_pipe;
+assign ms_to_ws_valid = ms_valid && ms_ready_go;
 always @(posedge clk) begin
     if (reset) begin
+        ms_valid <= 1'b0;
+    end
+    else if (ms_flush_pipe) begin
         ms_valid <= 1'b0;
     end
     else if (ms_allowin) begin
