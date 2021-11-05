@@ -515,14 +515,14 @@ assign br_taken = (   inst_beq  &&  rj_eq_rd
                    || inst_bge && !rj_lt_rd
                    || inst_bltu && rj_ltu_rd
                    || inst_bgeu && !rj_ltu_rd
-                  ) && ds_to_es_valid; 
+                  ) && ds_to_es_valid && !br_stall; 
                   
 assign br_target = (inst_beq || inst_bne || inst_bl || inst_b || inst_blt || inst_bge || inst_bltu || inst_bgeu) ? (ds_pc + br_offs) :
                                                    /*inst_jirl*/ (rj_value + jirl_offs);
 
 assign br_taken_cancel = br_taken && ds_ready_go && es_allowin;
 
-assign br_stall = es_blk_valid || ms_fwd_valid; //??
+assign br_stall = (es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2)) && (inst_beq || inst_bne || inst_blt || inst_bge || inst_bltu || inst_bgeu); //??
 
 assign br_bus       = {br_stall, 
                        br_taken,

@@ -82,6 +82,10 @@ always @(posedge clk) begin
         pc_buffer_valid <= 1'b1;
         pc_buffer <= br_target;
     end
+    else if(br_stall)begin
+        pc_buffer_valid <= 1'b0;
+        pc_buffer <= 32'h0;
+    end
     else if (pre_fs_ready_go) begin
         pc_buffer_valid <= 1'b0;
         pc_buffer <= 32'h0;
