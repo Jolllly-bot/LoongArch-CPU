@@ -151,7 +151,7 @@ assign es_fwd_result = es_cnt_op[1] ? timer_cnt[63:32]
 
 assign es_fwd_valid = es_to_ms_valid && es_gr_we;
 
-assign es_blk_valid = es_to_ms_valid && es_res_from_mem ? 1'b1 :
+assign es_blk_valid = es_valid && es_res_from_mem ? 1'b1 :
                       data_sram_process && es_res_from_mem ? 1'b1 :
                       1'b0;
 
