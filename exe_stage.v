@@ -251,7 +251,7 @@ begin
         signed_divisor_tvalid <= 1'b0;
         signed_dividend_tvalid <= 1'b0;
     end
-    else if(es_div_signed & ~signed_divisor_tready & ~signed_dividend_tready & (div_cycle==4'd0) )
+    else if(es_valid & es_div_signed & ~signed_divisor_tready & ~signed_dividend_tready & (div_cycle==4'd0) )
     begin
         signed_divisor_tvalid <= 1'b1;
         signed_dividend_tvalid <= 1'b1;
@@ -286,7 +286,7 @@ begin
         unsigned_divisor_tvalid <= 1'b0;
         unsigned_dividend_tvalid <= 1'b0;
     end
-    else if(es_div_unsigned & ~unsigned_divisor_tready & ~unsigned_dividend_tready  & (divu_cycle==4'd0))
+    else if(es_valid & es_div_unsigned & ~unsigned_divisor_tready & ~unsigned_dividend_tready  & (divu_cycle==4'd0))
     begin
         unsigned_divisor_tvalid <= 1'b1;
         unsigned_dividend_tvalid <= 1'b1;
@@ -308,7 +308,7 @@ begin
     begin
         div_cycle <= 4'd0;
     end
-    else if (es_div_signed & signed_divisor_tready)
+    else if (es_valid &es_div_signed & signed_divisor_tready)
     begin
         div_cycle <= div_cycle + 4'd1;
     end
@@ -327,7 +327,7 @@ begin
     begin
         divu_cycle <= 4'd0;
     end
-    else if (es_div_unsigned & unsigned_divisor_tready)
+    else if (es_valid & es_div_unsigned & unsigned_divisor_tready)
     begin
         divu_cycle <= divu_cycle + 4'd1;
     end
