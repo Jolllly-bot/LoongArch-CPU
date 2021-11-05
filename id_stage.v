@@ -522,7 +522,7 @@ assign br_target = (inst_beq || inst_bne || inst_bl || inst_b || inst_blt || ins
 
 assign br_taken_cancel = br_taken && ds_ready_go && es_allowin;
 
-assign br_stall = (es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2)) && (inst_beq || inst_bne || inst_blt || inst_bge || inst_bltu || inst_bgeu); //??
+assign br_stall = ((es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2)) || csr_blk) && (inst_beq || inst_bne || inst_blt || inst_bge || inst_bltu || inst_bgeu); //??
 
 assign br_bus       = {br_stall, 
                        br_taken,
