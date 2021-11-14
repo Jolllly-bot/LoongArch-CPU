@@ -15,8 +15,8 @@ module mycpu_top(
 
     input   [ 3:0] rid,
     input   [31:0] rdata,
-    //input [1:0]  rresp,
-    //input        rlast,
+    input   [1:0]  rresp,
+    input          rlast,
     input          rvalid,
     output         rready,
 
@@ -38,8 +38,8 @@ module mycpu_top(
     output         wvalid,
     input          wready,
 
-    //input [ 3:0] bid,
-    //input [ 1:0] bresp,
+    input   [ 3:0] bid,
+    input   [ 1:0] bresp,
     input          bvalid,
     output         bready,
 
