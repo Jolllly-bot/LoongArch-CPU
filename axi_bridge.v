@@ -65,9 +65,9 @@ module axi_bridge(
 );
 
 localparam IDLE = 4'b0001;
-localparam ADDR = 4'b0010;
-localparam DATA = 4'b0100;
-localparam RESP = 4'b1000;
+localparam REQ = 4'b0010;
+localparam RESP = 4'b0100;
+localparam END = 4'b1000;
 
 
 reg  [ 3:0] r_state;
@@ -89,7 +89,7 @@ reg  [31:0]	inst_sram_rdata_r;
 
 reg         r_wait_w;
 reg         w_wait_r;
-reg         en_arvalid;
+reg         ar_valid_r;
 reg         awvalid_r;
 reg         wvalid_r;
 
@@ -108,27 +108,27 @@ always@(*)begin
     case(r_state)
         IDLE:begin
             if((data_sram_req && !data_sram_wr) || (inst_sram_req && !inst_sram_wr))
-                r_next_state = ADDR;
+                r_next_state = REQ;
             else
                 r_next_state = IDLE;
         end 
-        ADDR:begin
+        REQ:begin
             if(arvalid && arready)
-                r_next_state = DATA;
-            else
-                r_next_state = ADDR;
-        end
-        DATA:begin
-            if (rvalid)
                 r_next_state = RESP;
             else
-                r_next_state = DATA;
+                r_next_state = REQ;
         end
         RESP:begin
-            if((r_data_req != w_data_req ) || (w_state != RESP))
-                r_next_state = IDLE;
+            if (rvalid)
+                r_next_state = END;
             else
                 r_next_state = RESP;
+        end
+        END:begin
+            if((r_data_req != w_data_req ) || (w_state != END))
+                r_next_state = IDLE;
+            else
+                r_next_state = END;
         end
         default:
             r_next_state = IDLE;
@@ -148,50 +148,50 @@ end
 always @(posedge aclk) begin
     if(!aresetn) 
         r_size      <= 3'd0;
-    else if((r_state == ADDR)&&(r_data_req && data_sram_addr_ok && !en_arvalid))
+    else if((r_state == REQ)&&(r_data_req && data_sram_addr_ok && !ar_valid_r))
         r_size      <= data_sram_size;
-    else if((r_state == ADDR)&&(!r_data_req && inst_sram_addr_ok && !en_arvalid))
+    else if((r_state == REQ)&&(!r_data_req && inst_sram_addr_ok && !ar_valid_r))
         r_size      <= inst_sram_size;
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
         r_addr      <= 32'd0;
-    else if((r_state == ADDR)&&(r_data_req && data_sram_addr_ok && !en_arvalid))
+    else if((r_state == REQ)&&(r_data_req && data_sram_addr_ok && !ar_valid_r))
         r_addr      <= data_sram_addr;
-    else if((r_state == ADDR)&&(!r_data_req && inst_sram_addr_ok && !en_arvalid))
+    else if((r_state == REQ)&&(!r_data_req && inst_sram_addr_ok && !ar_valid_r))
         r_addr      <= inst_sram_addr;
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
-        en_arvalid  <= 1'd0;
-    else if((r_state == ADDR)&&((data_sram_req && !data_sram_wr)||(inst_sram_req && !inst_sram_wr))&& !en_arvalid)
-        en_arvalid  <= 1'b1;
-    else if((r_state == ADDR)&&(arvalid && arready))
-        en_arvalid  <= 1'b0;
+        ar_valid_r  <= 1'd0;
+    else if((r_state == REQ)&&((data_sram_req && !data_sram_wr)||(inst_sram_req && !inst_sram_wr))&& !ar_valid_r)
+        ar_valid_r  <= 1'b1;
+    else if((r_state == REQ)&&(arvalid && arready))
+        ar_valid_r  <= 1'b0;
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
         r_wait_w    <= 1'd0;
-    else if((r_state == ADDR)&&((data_sram_req && !data_sram_wr)||(inst_sram_req && !inst_sram_wr))&& !en_arvalid)
-        r_wait_w    <= (w_state==ADDR||w_state==DATA);
-    else if((r_state == ADDR)&& r_wait_w)
-        r_wait_w    <= (w_state==ADDR||w_state==DATA);
+    else if((r_state == REQ)&&((data_sram_req && !data_sram_wr)||(inst_sram_req && !inst_sram_wr))&& !ar_valid_r)
+        r_wait_w    <= (w_state==REQ||w_state==RESP);
+    else if((r_state == REQ)&& r_wait_w)
+        r_wait_w    <= (w_state==REQ||w_state==RESP);
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
         inst_sram_rdata_r   <= 32'd0;
-    else if((r_state == DATA)&&(rvalid && !r_data_req))
+    else if((r_state == RESP)&&(rvalid && !r_data_req))
         inst_sram_rdata_r   <= rdata;
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
         data_sram_rdata_r   <= 32'd0;
-    else if((r_state == DATA)&&(rvalid && r_data_req))
+    else if((r_state == RESP)&&(rvalid && r_data_req))
         data_sram_rdata_r   <= rdata;
 end 
 
@@ -204,23 +204,23 @@ always@(*)begin
     case(w_state)
         IDLE:begin
             if((data_sram_req && data_sram_wr) || (inst_sram_req && inst_sram_wr))
-                w_next_state = ADDR;
+                w_next_state = REQ;
             else
                 w_next_state = IDLE;
         end 
-        ADDR:begin
+        REQ:begin
             if((awvalid && awready && wvalid && wready) || (awvalid && awready && !wvalid) || (wvalid && wready && !awvalid))
-                w_next_state = DATA;
-            else
-                w_next_state = ADDR;
-        end
-        DATA:begin
-            if (bvalid)
                 w_next_state = RESP;
             else
-                w_next_state = DATA;
+                w_next_state = REQ;
         end
         RESP:begin
+            if (bvalid)
+                w_next_state = END;
+            else
+                w_next_state = RESP;
+        end
+        END:begin
             w_next_state = IDLE;
         end
         default:
@@ -241,92 +241,92 @@ end
 always @(posedge aclk) begin
     if(!aresetn) 
         awvalid_r <= 1'd0;
-    else if((w_state == ADDR) && (!awvalid_r && !wvalid_r) && ((w_data_req && data_sram_addr_ok) || (!w_data_req && inst_sram_addr_ok)))
+    else if((w_state == REQ) && (!awvalid_r && !wvalid_r) && ((w_data_req && data_sram_addr_ok) || (!w_data_req && inst_sram_addr_ok)))
         awvalid_r <= 1'd1;
-    else if((w_state == ADDR) && (awvalid && awready))
+    else if((w_state == REQ) && (awvalid && awready))
         awvalid_r <= 1'd0;
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
         wvalid_r <= 1'd0;
-    else if((w_state == ADDR) && (!awvalid_r && !wvalid_r) && ((w_data_req && data_sram_addr_ok) || (!w_data_req && inst_sram_addr_ok)))
+    else if((w_state == REQ) && (!awvalid_r && !wvalid_r) && ((w_data_req && data_sram_addr_ok) || (!w_data_req && inst_sram_addr_ok)))
         wvalid_r <= 1'd1;
-    else if((w_state == ADDR) && (wvalid && wready))
+    else if((w_state == REQ) && (wvalid && wready))
         wvalid_r <= 1'd0;
 end
 
 always @(posedge aclk) begin
     if(!aresetn) 
         w_size <= 3'd0;
-    else if((w_state == ADDR)&& (!awvalid_r && !wvalid_r) && (w_data_req && data_sram_addr_ok))
+    else if((w_state == REQ)&& (!awvalid_r && !wvalid_r) && (w_data_req && data_sram_addr_ok))
         w_size <= data_sram_size;
-    else if((w_state == ADDR)&& (!awvalid_r && !wvalid_r) && (!w_data_req && inst_sram_addr_ok))
+    else if((w_state == REQ)&& (!awvalid_r && !wvalid_r) && (!w_data_req && inst_sram_addr_ok))
         w_size <= inst_sram_size;
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
         w_addr <= 32'd0;
-    else if((w_state == ADDR)&& (!awvalid_r && !wvalid_r) && (w_data_req && data_sram_addr_ok))
+    else if((w_state == REQ)&& (!awvalid_r && !wvalid_r) && (w_data_req && data_sram_addr_ok))
         w_addr <= data_sram_addr;
-    else if((w_state == ADDR)&& (!awvalid_r && !wvalid_r) && (!w_data_req && inst_sram_addr_ok))
+    else if((w_state == REQ)&& (!awvalid_r && !wvalid_r) && (!w_data_req && inst_sram_addr_ok))
         w_addr <= inst_sram_addr;
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
         w_strb <= 4'd0;
-    else if((w_state == ADDR)&& (!awvalid_r && !wvalid_r) && (w_data_req && data_sram_addr_ok))
+    else if((w_state == REQ)&& (!awvalid_r && !wvalid_r) && (w_data_req && data_sram_addr_ok))
         w_strb <= data_sram_wstrb;
-    else if((w_state == ADDR)&& (!awvalid_r && !wvalid_r) && (!w_data_req && inst_sram_addr_ok))
+    else if((w_state == REQ)&& (!awvalid_r && !wvalid_r) && (!w_data_req && inst_sram_addr_ok))
         w_strb <= inst_sram_wstrb;
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
         w_data <= 32'd0;
-    else if((w_state == ADDR)&& (!awvalid_r && !wvalid_r) && (w_data_req && data_sram_addr_ok))
+    else if((w_state == REQ)&& (!awvalid_r && !wvalid_r) && (w_data_req && data_sram_addr_ok))
         w_data <= data_sram_wdata;
-    else if((w_state == ADDR)&& (!awvalid_r && !wvalid_r) && (!w_data_req && inst_sram_addr_ok))
+    else if((w_state == REQ)&& (!awvalid_r && !wvalid_r) && (!w_data_req && inst_sram_addr_ok))
         w_data <= inst_sram_wdata;
 end 
 
 always @(posedge aclk) begin
     if(!aresetn) 
         w_wait_r <= 1'd0;
-    else if((w_state == ADDR) && (!awvalid_r && !wvalid_r) && ((w_data_req && data_sram_addr_ok)||(!w_data_req && inst_sram_addr_ok)))
-        w_wait_r <= (r_state==ADDR || r_state==DATA);
-    else if((w_state == ADDR) && w_wait_r)
-        w_wait_r <= (r_state==ADDR || r_state==DATA);
+    else if((w_state == REQ) && (!awvalid_r && !wvalid_r) && ((w_data_req && data_sram_addr_ok)||(!w_data_req && inst_sram_addr_ok)))
+        w_wait_r <= (r_state==REQ || r_state==RESP);
+    else if((w_state == REQ) && w_wait_r)
+        w_wait_r <= (r_state==REQ || r_state==RESP);
 end 
 
-assign inst_sram_addr_ok = (!r_wait_w) && (r_state == ADDR && !r_data_req && !arvalid)
-                        || (w_state == ADDR && !w_data_req && !awvalid && !wvalid);
+assign inst_sram_addr_ok = (!r_wait_w) && (r_state == REQ && !r_data_req && !arvalid)
+                        || (w_state == REQ && !w_data_req && !awvalid && !wvalid);
 
-assign inst_sram_data_ok = (r_state == RESP && !r_data_req) 
-                        || (w_state == RESP && !w_data_req);
+assign inst_sram_data_ok = (r_state == END && !r_data_req) 
+                        || (w_state == END && !w_data_req);
 
-assign data_sram_addr_ok = (!r_wait_w) && (r_state == ADDR && r_data_req  && !arvalid)
-                        || (w_state == ADDR && w_data_req  && !awvalid && !wvalid);
+assign data_sram_addr_ok = (!r_wait_w) && (r_state == REQ && r_data_req  && !arvalid)
+                        || (w_state == REQ && w_data_req  && !awvalid && !wvalid);
 
-assign data_sram_data_ok = (r_state == RESP && r_data_req)
-                        || (w_state == RESP && w_data_req);
+assign data_sram_data_ok = (r_state == END && r_data_req)
+                        || (w_state == END && w_data_req);
 
 assign araddr  = r_addr;
 assign arsize  = {1'b0, r_size[2] ? 2'b10 : r_size[1:0]};
-assign arvalid = en_arvalid && !r_wait_w;
-assign rready  = r_state == DATA;
+assign arvalid = ar_valid_r && !r_wait_w;
+assign rready  = r_state == RESP;
 
 assign awaddr  = w_addr;
 assign awsize  = {1'b0, w_size[2] ? 2'b10 : w_size[1:0]};
 assign wdata   = w_data;
 assign awvalid = awvalid_r && !w_wait_r;
 assign wvalid  = wvalid_r  && !w_wait_r;
-assign bready  = w_state == DATA;
+assign bready  = w_state == RESP;
 
-assign arid    = (r_state == ADDR)&&(r_data_req==1'b1) ;
-assign rid     = (r_state == ADDR)&&(r_data_req==1'b1) ;
+assign arid    = (r_state == REQ)&&(r_data_req==1'b1) ;
+assign rid     = (r_state == REQ)&&(r_data_req==1'b1) ;
 assign arlen   = 8'd0 ;
 assign arburst = 2'b01;
 assign arlock  = 2'd0 ;
