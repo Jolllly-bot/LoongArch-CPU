@@ -225,25 +225,34 @@ module tlb
                 | ({4{match1 == 16'b0100_0000_0000_0000}} & 4'd14)
                 | ({4{match1 == 16'b1000_0000_0000_0000}} & 4'd15);
 
-    assign s0_ppn = s0_vppn[0] ? tlb_ppn1[s0_index] : tlb_ppn0[s0_index];
-    assign s1_ppn = s1_vppn[0] ? tlb_ppn1[s1_index] : tlb_ppn0[s1_index];
+    assign s0_ppn = tlb_ps4MB[s0_index] ? (s0_vppn[9] ? tlb_ppn1[s0_index] : tlb_ppn0[s0_index])
+                                        : (s0_va_bit12 ? tlb_ppn1[s0_index] : tlb_ppn0[s0_index]);
+    assign s1_ppn = tlb_ps4MB[s1_index] ? (s1_vppn[9] ? tlb_ppn1[s1_index] : tlb_ppn0[s1_index])
+                                        : (s1_va_bit12 ? tlb_ppn1[s1_index] : tlb_ppn0[s1_index]);
 
-    assign s0_plv = s0_vppn[0] ? tlb_plv1[s0_index] : tlb_plv0[s0_index];
-    assign s1_plv = s1_vppn[0] ? tlb_plv1[s1_index] : tlb_plv0[s1_index];
+    assign s0_plv = tlb_ps4MB[s0_index] ? (s0_vppn[9] ? tlb_plv1[s0_index] : tlb_plv0[s0_index])
+                                        : (s0_va_bit12 ? tlb_plv1[s0_index] : tlb_plv0[s0_index]);
+    assign s1_plv = tlb_ps4MB[s1_index] ? (s1_vppn[9] ? tlb_plv1[s1_index] : tlb_plv0[s1_index])
+                                        : (s1_va_bit12 ? tlb_plv1[s1_index] : tlb_plv0[s1_index]);
+    
+    assign s0_mat = tlb_ps4MB[s0_index] ? (s0_vppn[9] ? tlb_mat1[s0_index] : tlb_mat0[s0_index])
+                                        : (s0_va_bit12 ? tlb_mat1[s0_index] : tlb_mat0[s0_index]);
+    assign s1_mat = tlb_ps4MB[s1_index] ? (s1_vppn[9] ? tlb_mat1[s1_index] : tlb_mat0[s1_index])
+                                        : (s1_va_bit12 ? tlb_mat1[s1_index] : tlb_mat0[s1_index]);
 
-    assign s0_mat = s0_vppn[0] ? tlb_mat1[s0_index] : tlb_mat0[s0_index];
-    assign s1_mat = s1_vppn[0] ? tlb_mat1[s1_index] : tlb_mat0[s1_index];
-
-    assign s0_d = s0_vppn[0] ? tlb_d1[s0_index] : tlb_d0[s0_index];
-    assign s1_d = s1_vppn[0] ? tlb_d1[s1_index] : tlb_d0[s1_index];
-
-    assign s0_v = s0_vppn[0] ? tlb_v1[s0_index] : tlb_v0[s0_index];
-    assign s1_v = s1_vppn[0] ? tlb_v1[s1_index] : tlb_v0[s1_index];    
+    assign s0_d = tlb_ps4MB[s0_index] ? (s0_vppn[9] ? tlb_d1[s0_index] : tlb_d0[s0_index])
+                                        : (s0_va_bit12 ? tlb_d1[s0_index] : tlb_d0[s0_index]);
+    assign s1_d = tlb_ps4MB[s1_index] ? (s1_vppn[9] ? tlb_d1[s1_index] : tlb_d0[s1_index])
+                                        : (s1_va_bit12 ? tlb_d1[s1_index] : tlb_d0[s1_index]);
+            
+    assign s0_v = tlb_ps4MB[s0_index] ? (s0_vppn[9] ? tlb_v1[s0_index] : tlb_v0[s0_index])
+                                        : (s0_va_bit12 ? tlb_v1[s0_index] : tlb_v0[s0_index]);
+    assign s1_v = tlb_ps4MB[s1_index] ? (s1_vppn[9] ? tlb_v1[s1_index] : tlb_v0[s1_index])
+                                        : (s1_va_bit12 ? tlb_v1[s1_index] : tlb_v0[s1_index]);
 
     assign s0_ps = tlb_ps4MB[s0_index] ? 6'd22 : 6'd12;
     assign s1_ps = tlb_ps4MB[s1_index] ? 6'd22 : 6'd12;
     
-
     assign r_e = tlb_e[r_index];
     assign r_vppn = tlb_vppn[r_index];
     assign r_ps = tlb_ps4MB[r_index] ? 6'd22 : 6'd12;
@@ -260,7 +269,7 @@ module tlb
     assign r_d1 = tlb_d1[r_index];
     assign r_v1 = tlb_v1[r_index];
     
-    always @(posedge clk) 
+always @(posedge clk) 
 begin
     if (we) 
     begin
