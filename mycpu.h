@@ -3,9 +3,9 @@
 
     `define BR_BUS_WD       35
     `define FS_TO_DS_BUS_WD 65
-    `define DS_TO_ES_BUS_WD 231
-    `define ES_TO_MS_BUS_WD 206
-    `define MS_TO_WS_BUS_WD 199
+    `define DS_TO_ES_BUS_WD 241
+    `define ES_TO_MS_BUS_WD 213
+    `define MS_TO_WS_BUS_WD 216
     `define WS_TO_RF_BUS_WD 40
     `define ES_FWD_BUS_WD   40
     `define MS_FWD_BUS_WD   39
@@ -39,6 +39,8 @@
 
     `define CSR_CRMD_PLV      1:0  
     `define CSR_CRMD_PIE        2
+    `define CSR_CRMD_DA         3
+    `define CSR_CRMD_PG         4
 
     `define CSR_PRMD_PPLV     1:0
     `define CSR_PRMD_PIE        2

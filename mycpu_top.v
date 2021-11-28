@@ -118,7 +118,6 @@ wire  [ 1:0] s1_mat;
 wire         s1_d;
 wire         s1_v;
 // invtlb opcode
-wire         invtlb_valid;
 wire  [ 4:0] invtlb_op;
  // write port
 wire         we; //w(rite) e(nable)
@@ -155,6 +154,8 @@ wire  [ 1:0] r_plv1;
 wire  [ 1:0] r_mat1;
 wire         r_d1;
 wire         r_v1;
+wire  [31:0] tlb_asid_rvalue;
+wire  [31:0] tlb_ehi_rvalue;
 
 axi_bridge u_axi_bridge(
     .aclk           (aclk    ),
@@ -315,43 +316,9 @@ exe_stage exe_stage(
     .s1_d          (s1_d           ),
     .s1_v          (s1_v           ),
     // invtlb opcode
-    .invtlb_valid  (invtlb_valid   ),
     .invtlb_op     (invtlb_op      ),
-    // write port
-    .we            (we             ), //w(rite) e(nable)
-    .w_index       (w_index        ),
-    .w_e           (w_e            ),
-    .w_ps          (w_ps           ),
-    .w_vppn        (w_vppn         ),
-    .w_asid        (w_asid         ),
-    .w_g           (w_g            ),
-    .w_ppn0        (w_ppn0         ),
-    .w_plv0        (w_plv0         ),
-    .w_mat0        (w_mat0         ),
-    .w_d0          (w_d0           ),
-    .w_v0          (w_v0           ),
-    .w_ppn1        (w_ppn1         ),
-    .w_plv1        (w_plv1         ),
-    .w_mat1        (w_mat1         ),
-    .w_d1          (w_d1           ),
-    .w_v1          (w_v1           ),
-    // read port
-    .r_index       (r_index        ),
-    .r_e           (r_e            ),
-    .r_vppn        (r_vppn         ),
-    .r_ps          (r_ps           ),
-    .r_asid        (r_asid         ),
-    .r_g           (r_g            ),
-    .r_ppn0        (r_ppn0         ),
-    .r_plv0        (r_plv0         ),
-    .r_mat0        (r_mat0         ),
-    .r_d0          (r_d0           ),
-    .r_v0          (r_v0           ),
-    .r_ppn1        (r_ppn1         ),     
-    .r_plv1        (r_plv1         ),
-    .r_mat1        (r_mat1         ),
-    .r_d1          (r_d1           ),
-    .r_v1          (r_v1           )
+    .tlb_ehi_rvalue(tlb_ehi_rvalue ),
+    .tlb_asid_rvalue(tlb_asid_rvalue)
 );
 // MEM stage
 mem_stage mem_stage(
@@ -391,7 +358,44 @@ wb_stage wb_stage(
     .debug_wb_rf_wnum (debug_wb_rf_wnum ),
     .debug_wb_rf_wdata(debug_wb_rf_wdata),
     .ws_to_fs_bus     (ws_to_fs_bus     ),
-    .ws_flush_pipe    (ws_flush_pipe    )
+    .ws_flush_pipe    (ws_flush_pipe    ),
+    // write port
+    .we            (we             ), //w(rite) e(nable)
+    .w_index       (w_index        ),
+    .w_e           (w_e            ),
+    .w_ps          (w_ps           ),
+    .w_vppn        (w_vppn         ),
+    .w_asid        (w_asid         ),
+    .w_g           (w_g            ),
+    .w_ppn0        (w_ppn0         ),
+    .w_plv0        (w_plv0         ),
+    .w_mat0        (w_mat0         ),
+    .w_d0          (w_d0           ),
+    .w_v0          (w_v0           ),
+    .w_ppn1        (w_ppn1         ),
+    .w_plv1        (w_plv1         ),
+    .w_mat1        (w_mat1         ),
+    .w_d1          (w_d1           ),
+    .w_v1          (w_v1           ),
+    // read port
+    .r_index       (r_index        ),
+    .r_e           (r_e            ),
+    .r_vppn        (r_vppn         ),
+    .r_ps          (r_ps           ),
+    .r_asid        (r_asid         ),
+    .r_g           (r_g            ),
+    .r_ppn0        (r_ppn0         ),
+    .r_plv0        (r_plv0         ),
+    .r_mat0        (r_mat0         ),
+    .r_d0          (r_d0           ),
+    .r_v0          (r_v0           ),
+    .r_ppn1        (r_ppn1         ),     
+    .r_plv1        (r_plv1         ),
+    .r_mat1        (r_mat1         ),
+    .r_d1          (r_d1           ),
+    .r_v1          (r_v1           ),
+    .tlb_ehi_rvalue(tlb_ehi_rvalue ),
+    .tlb_asid_rvalue(tlb_asid_rvalue)
 );
 
 // TLB

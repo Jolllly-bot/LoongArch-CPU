@@ -41,43 +41,9 @@ module exe_stage(
     input          s1_d,
     input          s1_v,
     // invtlb opcode
-    output         invtlb_valid,
     output  [ 4:0] invtlb_op,
-    // write port
-    output         we, //w(rite) e(nable)
-    output  [ 3:0] w_index,
-    output         w_e,
-    output  [ 5:0] w_ps,
-    output  [18:0] w_vppn,
-    output  [ 9:0] w_asid,
-    output         w_g,
-    output  [19:0] w_ppn0,
-    output  [ 1:0] w_plv0,
-    output  [ 1:0] w_mat0,
-    output         w_d0,
-    output         w_v0,
-    output  [19:0] w_ppn1,
-    output  [ 1:0] w_plv1,
-    output  [ 1:0] w_mat1,
-    output         w_d1,
-    output         w_v1,
-    // read port
-    output  [ 3:0] r_index,
-    input          r_e,
-    input   [18:0] r_vppn,
-    input   [ 5:0] r_ps,
-    input   [ 9:0] r_asid,
-    input          r_g,
-    input   [19:0] r_ppn0,
-    input   [ 1:0] r_plv0,
-    input   [ 1:0] r_mat0,
-    input          r_d0,
-    input          r_v0,
-    input   [19:0] r_ppn1,
-    input   [ 1:0] r_plv1,
-    input   [ 1:0] r_mat1,
-    input          r_d1,
-    input          r_v1
+    input   [31:0] tlb_asid_rvalue,
+    input   [31:0] tlb_ehi_rvalue
 );
 
 reg         es_valid      ;
@@ -127,7 +93,11 @@ wire        es_st_ex;
 wire        es_ale_h;
 wire        es_ale_w;
 wire [ 1:0] es_cnt_op;
-assign {es_cnt_op,
+wire [ 4:0] es_tlb_op;
+
+assign {es_tlb_op   ,
+        invtlb_op   ,
+        es_cnt_op,
         es_csr_esubcode,
         ds_to_es_ex ,
         es_ertn     ,
@@ -168,7 +138,10 @@ assign es_csr_wvalue = es_rkd_value; //TODO
 
 assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
 
-assign es_to_ms_bus = {es_mem_req  ,
+assign es_to_ms_bus = {s1_index    ,
+                       s1_found    ,
+                       es_tlb_op   ,
+                       es_mem_req  ,
                        es_vaddr    ,
                        es_csr_esubcode,
                        es_ex       ,

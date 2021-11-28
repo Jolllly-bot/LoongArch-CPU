@@ -70,6 +70,10 @@ module csr(
                      | ~csr_wmask[`CSR_CRMD_PLV]&csr_crmd_plv;
         csr_crmd_ie <= csr_wmask[`CSR_CRMD_PIE]&csr_wvalue[`CSR_CRMD_PIE] 
                      | ~csr_wmask[`CSR_CRMD_PIE]&csr_crmd_ie;
+        csr_crmd_da <= csr_wmask[`CSR_CRMD_DA]&csr_wvalue[`CSR_CRMD_DA] 
+                     | ~csr_wmask[`CSR_CRMD_DA]&csr_crmd_da;
+        csr_crmd_pg <= csr_wmask[`CSR_CRMD_PG]&csr_wvalue[`CSR_CRMD_PG] 
+                     | ~csr_wmask[`CSR_CRMD_PG]&csr_crmd_pg;
     end 
     else if (wb_ecode == `ECODE_TLBR) begin
         csr_crmd_da  <= 1'b1;

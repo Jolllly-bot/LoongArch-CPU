@@ -156,6 +156,9 @@ wire inst_tlb_wr;
 wire inst_tlb_fill;
 wire inst_invtlb;
 
+wire [4:0] tlb_op;
+wire [4:0] invtlb_op;
+
 wire mul_signed;
 wire mul_unsigned;
 wire mul_high;
@@ -194,7 +197,7 @@ wire        csr_blk;
 wire        ds_has_int;
 
 wire        ds_ex_ine;
-wire [1:0] cnt_op;
+wire [1:0]  cnt_op;
 
 assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   | inst_nor    | inst_and     | inst_or   
                     | inst_xor       | inst_slli_w  | inst_srli_w  | inst_srai_w | inst_addi_w | inst_ld_w    | inst_st_w   
@@ -205,7 +208,9 @@ assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   
                     | inst_ld_bu     | inst_ld_hu   | inst_st_b    | inst_st_h   | inst_csrrd  | inst_csrwr   | inst_csrxchg
                     | inst_ertn      | inst_syscall | inst_break   |inst_rdcntvl_w | inst_rdcntvh_w| inst_rdcntid_w);
 
-assign ds_to_es_bus = {cnt_op      ,
+assign ds_to_es_bus = {tlb_op      ,
+                       invtlb_op   ,
+                       cnt_op      ,
                        id_csr_esubcode,
                        ds_ex       ,
                        inst_ertn   ,
@@ -391,6 +396,9 @@ assign id_csr_ecode = ds_has_int   ? `ECODE_INT
                     : inst_syscall ? `ECODE_SYS
                     : inst_break   ? `ECODE_BRK
                     : 6'h0;
+
+assign tlb_op    = {inst_invtlb, inst_tlb_fill, inst_tlb_wr, inst_tlb_rd, inst_tlb_srch};
+assign invtlb_op = ds_inst[4:0];
 
 assign id_csr_esubcode = fs_ex ? `ESUBCODE_ADEF : 9'b0;
 assign id_csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_rdcntid_w;
