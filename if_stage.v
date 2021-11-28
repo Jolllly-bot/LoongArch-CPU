@@ -21,8 +21,21 @@ module if_stage(
     input         inst_sram_data_ok,
     input [31:0]  inst_sram_rdata,
 
-    input  [31:0] ws_to_fs_bus   ,
-    input         fs_flush_pipe
+    input  [31:0] ws_to_fs_bus,
+    input         fs_flush_pipe,
+
+    // search port 0 (for fetch)
+    output [18:0] s0_vppn,
+    output        s0_va_bit12,
+    output [ 9:0] s0_asid,
+    input         s0_found,
+    input  [ 3:0] s0_index,
+    input  [19:0] s0_ppn,
+    input  [ 5:0] s0_ps,
+    input  [ 1:0] s0_plv,
+    input  [ 1:0] s0_mat,
+    input         s0_d,
+    input         s0_v
 );
 wire        pre_fs_ready_go;
 reg         fs_valid;

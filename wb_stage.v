@@ -137,6 +137,8 @@ csr u_csr(
     .ipi_int_in(ws_ipi_int_in),
     .coreid_in(ws_coreid_in),
     .wb_vaddr(wb_vaddr)
-    );
+);
+
+
 
 endmodule

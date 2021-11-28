@@ -26,7 +26,58 @@ module exe_stage(
     input [31:0]  data_sram_rdata,
     
     input         es_flush_pipe,
-    input         ms_ex
+    input         ms_ex,
+
+    // search port 1 (for load/store)
+    output  [18:0] s1_vppn,
+    output         s1_va_bit12,
+    output  [ 9:0] s1_asid,
+    input          s1_found,
+    input   [ 3:0] s1_index,
+    input   [19:0] s1_ppn,
+    input   [ 5:0] s1_ps,
+    input   [ 1:0] s1_plv,
+    input   [ 1:0] s1_mat,
+    input          s1_d,
+    input          s1_v,
+    // invtlb opcode
+    output         invtlb_valid,
+    output  [ 4:0] invtlb_op,
+    // write port
+    output         we, //w(rite) e(nable)
+    output  [ 3:0] w_index,
+    output         w_e,
+    output  [ 5:0] w_ps,
+    output  [18:0] w_vppn,
+    output  [ 9:0] w_asid,
+    output         w_g,
+    output  [19:0] w_ppn0,
+    output  [ 1:0] w_plv0,
+    output  [ 1:0] w_mat0,
+    output         w_d0,
+    output         w_v0,
+    output  [19:0] w_ppn1,
+    output  [ 1:0] w_plv1,
+    output  [ 1:0] w_mat1,
+    output         w_d1,
+    output         w_v1,
+    // read port
+    output  [ 3:0] r_index,
+    input          r_e,
+    input   [18:0] r_vppn,
+    input   [ 5:0] r_ps,
+    input   [ 9:0] r_asid,
+    input          r_g,
+    input   [19:0] r_ppn0,
+    input   [ 1:0] r_plv0,
+    input   [ 1:0] r_mat0,
+    input          r_d0,
+    input          r_v0,
+    input   [19:0] r_ppn1,
+    input   [ 1:0] r_plv1,
+    input   [ 1:0] r_mat1,
+    input          r_d1,
+    input          r_v1
 );
 
 reg         es_valid      ;
@@ -113,7 +164,7 @@ wire [31:0] es_result     ;
 reg  [3:0] div_cycle      ;
 reg  [3:0] divu_cycle     ;
 
-assign es_csr_wvalue = es_rkd_value;
+assign es_csr_wvalue = es_rkd_value; //TODO
 
 assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
 

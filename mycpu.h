@@ -25,7 +25,17 @@
     `define CSR_TCFG   32'h41
     `define CSR_TVAL   32'h42
     `define CSR_TICLR  32'h44
-   
+
+    `define CSR_TLBIDX    32'h10
+    `define CSR_TLBEHI    32'h11
+    `define CSR_TLBELO0   32'h12
+    `define CSR_TLBELO1   32'h13
+    `define CSR_ASID      32'h18
+    `define CSR_TLBENTRY 32'h88
+    `define CSR_DMW0      32'h180
+    `define CSR_DMW1      32'h181
+
+
 
     `define CSR_CRMD_PLV      1:0  
     `define CSR_CRMD_PIE        2
@@ -50,6 +60,30 @@
     `define CSR_TID_TID      31:0
 
     `define CSR_TICLR_CLR       0
+
+    `define CSR_TLBIDX_INDEX  3 :0
+    `define CSR_TLBIDX_PS     29:24
+    `define CSR_TLBIDX_NE     31
+
+    `define CSR_TLBEHI_VPPN   31:13
+
+    `define CSR_TLBELO_V      0
+    `define CSR_TLBELO_D      1
+    `define CSR_TLBELO_PLV    3 :2
+    `define CSR_TLBELO_MAT    5 :4
+    `define CSR_TLBELO_G      6
+    `define CSR_TLBELO_PPN    31:8
+
+    `define CSR_TLBENTRY_PA   31:6
+
+    `define CSR_ASID_ASID     9 :0
+    `define CSR_ASID_ASIDBITS 23:16
+
+    `define CSR_DMW_PLV0      0
+    `define CSR_DMW_PLV3      3
+    `define CSR_DMW_MAT       5 :4
+    `define CSR_DMW_PSEG      27:25
+    `define CSR_DMW_VSEG      31:29
     
     `define ECODE_INT  6'h0
     `define ECODE_PIL  6'h1
@@ -66,6 +100,12 @@
     `define ECODE_FPD  6'hf
     `define ECODE_FPE  6'h12
     `define ECODE_TLBR 6'h3f
+    
+    `define TLB_SRCH 5'b00001
+    `define TLB_RD   5'b00010
+    `define TLB_WR   5'b00100
+    `define TLB_FILL 5'b01000
+    `define TLB_INV  5'b10000
 
 
     `define ESUBCODE_ADEF 9'h0

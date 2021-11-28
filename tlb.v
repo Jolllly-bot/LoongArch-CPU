@@ -92,11 +92,13 @@ module tlb
     generate for (i=0; i<TLBNUM; i=i+1) begin: gen_for_tlb_match
         assign match0[i] = (s0_vppn[18:10] == tlb_vppn[i][18:10]) 
                         && (tlb_ps4MB[i] || s0_vppn[9:0]==tlb_vppn[i][9:0]) 
-                        && ((s0_asid == tlb_asid[i]) || tlb_g[i]);
+                        && ((s0_asid == tlb_asid[i]) || tlb_g[i])
+                        && tlb_e[i];
 
         assign match1[i] = (s1_vppn[18:10] == tlb_vppn[i][18:10]) 
                         && (tlb_ps4MB[i] || s1_vppn[9:0]==tlb_vppn[i][9:0]) 
-                        && ((s1_asid == tlb_asid[i]) || tlb_g[i]);
+                        && ((s1_asid == tlb_asid[i]) || tlb_g[i])
+                        && tlb_e[i];
     end endgenerate
     
     assign s0_found = |match0;
@@ -113,6 +115,7 @@ module tlb
 
     assign s0_plv = tlb_ps4MB[s0_index] ? (s0_vppn[9]  ? tlb_plv1[s0_index] : tlb_plv0[s0_index])
                                         : (s0_va_bit12 ? tlb_plv1[s0_index] : tlb_plv0[s0_index]);
+
     assign s1_plv = tlb_ps4MB[s1_index] ? (s1_vppn[9]  ? tlb_plv1[s1_index] : tlb_plv0[s1_index])
                                         : (s1_va_bit12 ? tlb_plv1[s1_index] : tlb_plv0[s1_index]);
     
@@ -123,11 +126,13 @@ module tlb
 
     assign s0_d = tlb_ps4MB[s0_index] ? (s0_vppn[9]  ? tlb_d1[s0_index] : tlb_d0[s0_index])
                                       : (s0_va_bit12 ? tlb_d1[s0_index] : tlb_d0[s0_index]);
+
     assign s1_d = tlb_ps4MB[s1_index] ? (s1_vppn[9]  ? tlb_d1[s1_index] : tlb_d0[s1_index])
                                       : (s1_va_bit12 ? tlb_d1[s1_index] : tlb_d0[s1_index]);
             
     assign s0_v = tlb_ps4MB[s0_index] ? (s0_vppn[9]  ? tlb_v1[s0_index] : tlb_v0[s0_index])
                                       : (s0_va_bit12 ? tlb_v1[s0_index] : tlb_v0[s0_index]);
+
     assign s1_v = tlb_ps4MB[s1_index] ? (s1_vppn[9]  ? tlb_v1[s1_index] : tlb_v0[s1_index])
                                       : (s1_va_bit12 ? tlb_v1[s1_index] : tlb_v0[s1_index]);
 
