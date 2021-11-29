@@ -413,7 +413,7 @@ always @(posedge clk ) begin
     end
     else if(csr_we && csr_num == `CSR_TLBIDX) begin
         tlb_idx_ne <= csr_wmask[`CSR_TLBIDX_NE] & csr_wvalue[`CSR_TLBIDX_NE]
-                  | ~csr_wmask[`CSR_TLBIDX_NE] & tlb_idx_ne; 
+                  |  ~csr_wmask[`CSR_TLBIDX_NE] & tlb_idx_ne; 
     end
 end
 

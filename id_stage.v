@@ -206,7 +206,8 @@ assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   
                     | inst_mul_w     | inst_mulh_w  | inst_mulh_wu | inst_div_w  | inst_mod_w  | inst_div_wu  | inst_mod_wu
                     | inst_pcaddu12i | inst_blt     | inst_bge     | inst_bltu   | inst_bgeu   | inst_ld_b    | inst_ld_h 
                     | inst_ld_bu     | inst_ld_hu   | inst_st_b    | inst_st_h   | inst_csrrd  | inst_csrwr   | inst_csrxchg
-                    | inst_ertn      | inst_syscall | inst_break   |inst_rdcntvl_w | inst_rdcntvh_w| inst_rdcntid_w);
+                    | inst_ertn      | inst_syscall | inst_break   |inst_rdcntvl_w | inst_rdcntvh_w | inst_rdcntid_w
+                    | inst_tlb_srch  | inst_tlb_rd  | inst_tlb_wr  | inst_tlb_fill | inst_invtlb);
 
 assign ds_to_es_bus = {tlb_op      ,
                        invtlb_op   ,

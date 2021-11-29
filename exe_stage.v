@@ -398,6 +398,10 @@ assign es_csr_num = (es_ale_h || es_ale_w) ? `CSR_EENTRY : ds_csr_num;
 
 assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // exception from exe, mem, wb
 
+assign s1_vppn = es_tlb_op == `TLB_SRCH ? es_rkd_value[31:13] : tlb_ehi_rvalue[31:13];
+assign s1_asid = es_tlb_op == `TLB_SRCH ? es_rj_value[9:0] : tlb_asid_rvalue[9:0];
+assign s1_va_bit12 = 1'b0;
+
 assign data_sram_size = ( es_load_op[2] || es_st_op[2] ) ? 2'd2 :
                         ( es_load_op[1] || es_load_op[4] || es_st_op[1] ) ? 2'd1 :
                         2'd0;
