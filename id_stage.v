@@ -521,7 +521,9 @@ assign div_mod      = inst_div_w  | inst_div_wu;
 //-------------Exception-----------------
 assign cnt_op = {inst_rdcntvh_w, inst_rdcntvl_w};
 
-assign ds_ex = (inst_syscall || inst_break || ds_ex_ine || ds_has_int || fs_ex) && ds_valid;assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   | inst_nor    | inst_and     | inst_or   
+assign ds_ex = (inst_syscall || inst_break || ds_ex_ine || ds_has_int || fs_ex) && ds_valid;
+
+assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   | inst_nor    | inst_and     | inst_or   
                     | inst_xor       | inst_slli_w  | inst_srli_w  | inst_srai_w | inst_addi_w | inst_ld_w    | inst_st_w   
                     | inst_jirl      | inst_b       | inst_bl      | inst_beq    | inst_bne    | inst_lu12i_w | inst_slti   
                     | inst_sltui     | inst_andi    | inst_ori     | inst_xori   | inst_sll_w  | inst_srl_w   | inst_sra_w  

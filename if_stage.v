@@ -65,6 +65,8 @@ assign fs_to_ds_bus = {fs_ex,
 // pre-IF stage
 wire fs_ex;
 wire fs_ex_adef;
+wire fs_ecode;
+
 
 assign fs_ex = fs_valid && fs_ex_adef;
 assign fs_ex_adef = nextpc[1] || nextpc[0];

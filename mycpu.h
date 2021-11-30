@@ -31,7 +31,7 @@
     `define CSR_TLBELO0   32'h12
     `define CSR_TLBELO1   32'h13
     `define CSR_ASID      32'h18
-    `define CSR_TLBENTRY 32'h88
+    `define CSR_TLBRENTRY 32'h88
     `define CSR_DMW0      32'h180
     `define CSR_DMW1      32'h181
 
@@ -76,7 +76,7 @@
     `define CSR_TLBELO_G      6
     `define CSR_TLBELO_PPN    31:8
 
-    `define CSR_TLBENTRY_PA   31:6
+    `define CSR_TLBRENTRY_PA   31:6
 
     `define CSR_ASID_ASID     9 :0
     `define CSR_ASID_ASIDBITS 23:16
@@ -102,6 +102,7 @@
     `define ECODE_FPD  6'hf
     `define ECODE_FPE  6'h12
     `define ECODE_TLBR 6'h3f
+    
     
     `define ESUBCODE_ADEF 9'h0
     `define ESUBCODE_ADEM 9'h31

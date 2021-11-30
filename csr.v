@@ -523,19 +523,19 @@ end
 assign tlb_elo1_rvalue   = {tlb_elo1_ppn, 1'b0, tlb_elo1_g, tlb_elo1_mat, tlb_elo1_plv, tlb_elo1_d, tlb_elo1_v}; 
 
 
-//TLBENTRY
-reg   [25:0] tlb_entry_pa;
-wire  [31:0] tlb_entry_rvalue;
+//TLBRENTRY
+reg   [25:0] tlb_rentry_pa;
+wire  [31:0] tlb_rentry_rvalue;
 always @(posedge clk ) begin
     if(reset)begin
-        tlb_entry_pa <= 26'b0;
+        tlb_rentry_pa <= 26'b0;
     end 
-    else if(csr_we && csr_num == `CSR_TLBENTRY) begin
-        tlb_entry_pa <= csr_wmask[`CSR_TLBENTRY_PA] & csr_wvalue[`CSR_TLBENTRY_PA]
-                         | ~csr_wmask[`CSR_TLBENTRY_PA] & tlb_entry_pa; 
+    else if(csr_we && csr_num == `CSR_TLBRENTRY) begin
+        tlb_rentry_pa <= csr_wmask[`CSR_TLBRENTRY_PA] & csr_wvalue[`CSR_TLBRENTRY_PA]
+                         | ~csr_wmask[`CSR_TLBRENTRY_PA] & tlb_rentry_pa; 
     end
 end
-assign tlb_entry_rvalue = {tlb_entry_pa, 6'b0}; 
+assign tlb_rentry_rvalue = {tlb_rentry_pa, 6'b0}; 
 
 
 assign has_int = ((csr_estat_is[11:0] & csr_ecfg_lie[11:0]) != 12'b0) && (csr_crmd_ie == 1'b1);
@@ -559,7 +559,7 @@ assign csr_rvalue =   {32{csr_num ==`CSR_CRMD}}      & csr_crmd_rvalue
                     | {32{csr_num == `CSR_TLBEHI}}   & tlb_ehi_rvalue
                     | {32{csr_num == `CSR_TLBELO0}}  & tlb_elo0_rvalue
                     | {32{csr_num == `CSR_TLBELO1}}  & tlb_elo1_rvalue
-                    | {32{csr_num == `CSR_TLBENTRY}} & tlb_entry_rvalue
+                    | {32{csr_num == `CSR_TLBRENTRY}} & tlb_rentry_rvalue
                     | {32{csr_num == `CSR_ASID}}     & tlb_asid_rvalue
                     | {32{csr_num == `CSR_DMW0}}     & tlb_dmw0_rvalue
                     | {32{csr_num == `CSR_DMW1}}     & tlb_dmw1_rvalue;
