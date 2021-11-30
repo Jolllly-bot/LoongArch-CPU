@@ -119,11 +119,29 @@ module tlb
                             ||((invtlb_op==5'h6) & (inv_cond[i][1] | inv_cond[i][2]) & inv_cond[i][3]);
        
         always @(posedge clk )begin
-            if(!we || !(w_index==i))begin
-                if(inv_match[i] && invtlb_valid)begin
-                   tlb_e[i] <= 1'b0;
-                end
-            end      
+            if(we && w_index==i)begin
+                tlb_e    [i] <= w_e;
+                tlb_ps4MB[i] <= (w_ps==6'd22);
+                tlb_vppn [i] <= w_vppn;
+                tlb_asid [i] <= w_asid;
+                tlb_g    [i] <= w_g;
+                
+                tlb_ppn0 [i] <= w_ppn0;
+                tlb_plv0 [i] <= w_plv0;
+                tlb_mat0 [i] <= w_mat0;
+                tlb_d0   [i] <= w_d0;
+                tlb_v0   [i] <= w_v0;
+                
+                tlb_ppn1 [i] <= w_ppn1;
+                tlb_plv1 [i] <= w_plv1;
+                tlb_mat1 [i] <= w_mat1;
+                tlb_d1   [i] <= w_d1;
+                tlb_v1   [i] <= w_v1;
+            end
+            else if(inv_match[i] & invtlb_valid)begin
+                tlb_e    [i] <= 1'b0;
+            end
+                
         end
     end endgenerate
     
@@ -182,33 +200,5 @@ module tlb
     assign r_d1   = tlb_d1   [r_index];
     assign r_v1   = tlb_v1   [r_index];
     
-always @(posedge clk) 
-begin
-    if (we) 
-    begin
-        if(w_ps == 6'd22)begin
-            tlb_ps4MB[w_index] <= 1'b1;
-        end
-        else begin
-            tlb_ps4MB[w_index] <= 1'b0;
-        end
 
-        tlb_e   [w_index] <= w_e;
-        tlb_vppn[w_index] <= w_vppn;
-        tlb_asid[w_index] <= w_asid;
-        tlb_g   [w_index] <= w_g;
-        tlb_ppn0[w_index] <= w_ppn0;
-        tlb_plv0[w_index] <= w_plv0;
-        tlb_mat0[w_index] <= w_mat0;
-        tlb_d0  [w_index] <= w_d0;
-        tlb_v0  [w_index] <= w_v0;
-        tlb_ppn1[w_index] <= w_ppn1;
-        tlb_plv1[w_index] <= w_plv1;
-        tlb_mat1[w_index] <= w_mat1;
-        tlb_d1  [w_index] <= w_d1;
-        tlb_v1  [w_index] <= w_v1;
- 
-    end
-
-end
 endmodule
