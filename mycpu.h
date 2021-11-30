@@ -103,15 +103,13 @@
     `define ECODE_FPE  6'h12
     `define ECODE_TLBR 6'h3f
     
+    `define ESUBCODE_ADEF 9'h0
+    `define ESUBCODE_ADEM 9'h31
+    
     `define TLB_SRCH 5'b00001
     `define TLB_RD   5'b00010
     `define TLB_WR   5'b00100
     `define TLB_FILL 5'b01000
     `define TLB_INV  5'b10000
-
-
-    `define ESUBCODE_ADEF 9'h0
-    `define ESUBCODE_ADEM 9'h31
-    
 
 `endif

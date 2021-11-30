@@ -33,19 +33,33 @@ wire [ 4:0] ms_dest;
 wire [31:0] ms_result;
 wire [31:0] ms_pc;
 
-wire es_to_ms_ex;
-wire ms_ex;
+wire        ms_fwd_valid;
+wire        ms_tlb_blk;
+
+wire [31:0] mem_result;
+wire [31:0] ms_final_result;
+
+wire [ 3:0] ms_vaddr_type;
+wire [31:0] lb_data;
+wire [31:0] lbu_data;
+wire [31:0] lh_data;
+wire [31:0] lhu_data;
+wire [31:0] lw_data;
+
+
+wire        es_to_ms_ex;
+wire        ms_ex;
 wire [13:0] ms_csr_num;
-wire ms_csr_we;
-wire ms_csr_re;
+wire        ms_csr_we;
+wire        ms_csr_re;
 wire [31:0] ms_csr_wmask;
-wire ms_ertn;
-wire ms_syscall;
+wire        ms_ertn;
+wire        ms_syscall;
 wire [31:0] ms_csr_wvalue;
 wire [ 5:0] ms_csr_ecode;
 wire [ 8:0] ms_csr_esubcode;
 wire [31:0] ms_vaddr;
-wire ms_mem_req;
+wire        ms_mem_req;
 wire [ 4:0] ms_tlb_op;
 wire        ms_refetch;
 
@@ -70,8 +84,6 @@ assign {ms_refetch ,
         ms_pc             //31:0
        } = es_to_ms_bus_r;
 
-wire [31:0] mem_result;
-wire [31:0] ms_final_result;
 
 assign ms_ex = es_to_ms_ex && ms_to_ws_valid; 
 assign ms_to_es_ex = (es_to_ms_ex || ms_ertn) && ms_to_ws_valid;
@@ -95,14 +107,12 @@ assign ms_to_ws_bus = {ms_refetch  ,
                       };
 
 
-//ms forward path
-wire ms_fwd_valid;
-wire ms_tlb_blk;
-
-assign ms_fwd_valid = ms_to_ws_valid && ms_gr_we;
+//---------forward------------
 assign ms_tlb_blk = ms_to_ws_valid 
                 && (ms_csr_we && (ms_csr_num == `CSR_ASID || ms_csr_num == `CSR_TLBEHI))
-                && (ms_tlb_op == `TLB_RD); //TODO
+                && (ms_tlb_op == `TLB_RD); //TODO?
+
+assign ms_fwd_valid = ms_to_ws_valid && ms_gr_we;
 
 assign ms_fwd_bus = {ms_csr_re && ms_to_ws_valid,
                      ms_fwd_valid   , //37:37
@@ -129,12 +139,6 @@ always @(posedge clk) begin
     end
 end
 
-wire [ 3:0] ms_vaddr_type;
-wire [31:0] lb_data;
-wire [31:0] lbu_data;
-wire [31:0] lh_data;
-wire [31:0] lhu_data;
-wire [31:0] lw_data;
 
 decoder_2_4 u_dec_ms(.in(ms_vaddr[1:0]), .out(ms_vaddr_type));
 

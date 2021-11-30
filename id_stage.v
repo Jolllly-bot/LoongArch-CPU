@@ -30,7 +30,7 @@ reg  [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus_r;
 
 wire [31:0] ds_inst;
 wire [31:0] ds_pc  ;
-wire fs_ex;
+wire        fs_ex;
 assign {fs_ex,
         ds_inst,
         ds_pc  } = fs_to_ds_bus_r;
@@ -38,9 +38,9 @@ assign {fs_ex,
 wire        rf_we   ;
 wire [ 4:0] rf_waddr;
 wire [31:0] rf_wdata;
-wire ws_csr_re;
-wire ms_csr_re;
-wire es_csr_re;
+wire        ws_csr_re;
+wire        ms_csr_re;
+wire        es_csr_re;
 assign {ds_has_int,
         ws_csr_re,
         rf_we   ,  //37:37
@@ -156,9 +156,6 @@ wire inst_tlb_wr;
 wire inst_tlb_fill;
 wire inst_invtlb;
 
-wire [4:0] tlb_op;
-wire [4:0] invtlb_op;
-
 wire mul_signed;
 wire mul_unsigned;
 wire mul_high;
@@ -185,7 +182,19 @@ wire [32:0] rj_sub_rd;
 wire        rj_lt_rd;
 wire        rj_ltu_rd;
 
-//------------------------------
+//forward
+wire        es_fwd_valid;
+wire [4:0]  es_dest;
+wire [31:0] es_data;
+wire        es_blk_valid;
+wire        ms_fwd_valid;
+wire [4:0]  ms_dest;
+wire [31:0] ms_data;
+wire        es_rf_eq;
+wire        ms_rf_eq;
+wire        wb_rf_eq;
+
+//exception
 wire        ds_ex;
 wire [13:0] id_csr_num;
 wire        id_csr_we;
@@ -199,29 +208,8 @@ wire        ds_has_int;
 wire        ds_ex_ine;
 wire [1:0]  cnt_op;
 
-reg         ds_refetch;
-wire        refetch_valid;
-always @(posedge clk) begin
-    if (reset) begin
-        ds_refetch <= 1'b0;
-    end
-    else if (ds_flush_pipe) begin
-        ds_refetch <= 1'b0;
-    end
-    else if (ds_valid && ds_allowin && (inst_tlb_rd || inst_tlb_fill || inst_tlb_wr || inst_invtlb)) begin
-        ds_refetch <= 1'b1;
-    end
-end
-
-assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   | inst_nor    | inst_and     | inst_or   
-                    | inst_xor       | inst_slli_w  | inst_srli_w  | inst_srai_w | inst_addi_w | inst_ld_w    | inst_st_w   
-                    | inst_jirl      | inst_b       | inst_bl      | inst_beq    | inst_bne    | inst_lu12i_w | inst_slti   
-                    | inst_sltui     | inst_andi    | inst_ori     | inst_xori   | inst_sll_w  | inst_srl_w   | inst_sra_w  
-                    | inst_mul_w     | inst_mulh_w  | inst_mulh_wu | inst_div_w  | inst_mod_w  | inst_div_wu  | inst_mod_wu
-                    | inst_pcaddu12i | inst_blt     | inst_bge     | inst_bltu   | inst_bgeu   | inst_ld_b    | inst_ld_h 
-                    | inst_ld_bu     | inst_ld_hu   | inst_st_b    | inst_st_h   | inst_csrrd  | inst_csrwr   | inst_csrxchg
-                    | inst_ertn      | inst_syscall | inst_break   |inst_rdcntvl_w | inst_rdcntvh_w | inst_rdcntid_w
-                    | inst_tlb_srch  | inst_tlb_rd  | inst_tlb_wr  | inst_tlb_fill | inst_invtlb) || (inst_invtlb && (invtlb_op[3] || invtlb_op[4] || (invtlb_op == 5'h7)) );
+wire [4:0]  tlb_op;
+wire [4:0]  invtlb_op;
 
 assign ds_to_es_bus = {ds_refetch  ,
                        tlb_op      ,
@@ -256,22 +244,10 @@ assign ds_to_es_bus = {ds_refetch  ,
                        ds_pc          //31 :0
                       };
 
-//forward
-wire        es_fwd_valid;
-wire [4:0]  es_dest;
-wire [31:0] es_data;
-wire        es_blk_valid;
-wire        ms_fwd_valid;
-wire [4:0]  ms_dest;
-wire [31:0] ms_data;
 
 assign csr_blk = (ws_csr_re && ((rf_waddr == rf_raddr1) || (rf_waddr == rf_raddr2)))
                 | (es_csr_re && ((es_dest == rf_raddr1) || (es_dest == rf_raddr2)))
                 | (ms_csr_re && ((ms_dest == rf_raddr1) || (ms_dest == rf_raddr2)));
-
-wire        es_rf_eq;
-wire        ms_rf_eq;
-wire        wb_rf_eq;
 
 assign {es_csr_re   ,
         es_fwd_valid,
@@ -288,8 +264,6 @@ assign {ms_csr_re    ,
 
 
 assign ds_ready_go    = ds_flush_pipe ||  ( (!(es_blk_valid && (es_dest == rf_raddr1  || es_dest == rf_raddr2))) && !csr_blk);
-
-
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
 assign ds_to_es_valid = ds_valid && ds_ready_go && ~ds_flush_pipe;
 always @(posedge clk) begin
@@ -398,35 +372,6 @@ assign inst_tlb_wr   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] &
 assign inst_tlb_fill = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b01101) & (rj == 5'h0) & (rd == 5'h0);
 assign inst_invtlb   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h13];
 
-assign cnt_op = {inst_rdcntvh_w, inst_rdcntvl_w};
-
-assign ds_ex = (inst_syscall || inst_break || ds_ex_ine || ds_has_int || fs_ex) && ds_valid;
-
-assign id_csr_num = inst_ertn ? `CSR_ERA 
-                  : (inst_syscall || inst_break || ds_ex_ine || ds_has_int || fs_ex) ? `CSR_EENTRY
-                  : inst_rdcntid_w  ? `CSR_TID
-                  : ds_inst[23:10];
-assign id_csr_ecode = ds_has_int   ? `ECODE_INT
-                    : fs_ex        ? `ECODE_ADE
-                    : ds_ex_ine    ? `ECODE_INE
-                    : inst_syscall ? `ECODE_SYS
-                    : inst_break   ? `ECODE_BRK
-                    : 6'h0;
-
-assign tlb_op    = {inst_invtlb, inst_tlb_fill, inst_tlb_wr, inst_tlb_rd, inst_tlb_srch};
-assign invtlb_op = inst_invtlb ? ds_inst[4:0] : 5'b0;
-
-assign id_csr_esubcode = fs_ex ? `ESUBCODE_ADEF : 9'b0;
-assign id_csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_rdcntid_w;
-assign id_csr_we = inst_csrwr | inst_csrxchg;
-assign id_csr_wmask = inst_csrxchg ? rj_value : {32{1'b1}};
-
-assign mul_signed   = inst_mul_w  | inst_mulh_w;
-assign mul_unsigned = inst_mulh_wu;
-assign mul_high     = inst_mulh_w | inst_mulh_wu;
-assign div_signed   = inst_div_w  | inst_mod_w;
-assign div_unsigned = inst_div_wu | inst_mod_wu;
-assign div_mod      = inst_div_w  | inst_div_wu;
 
 assign alu_op[ 0] = inst_add_w | inst_addi_w | inst_st_w 
                     | inst_st_b | inst_st_h | res_from_mem
@@ -521,7 +466,7 @@ regfile u_regfile(
     .wdata  (rf_wdata )
     );
 
-//mux
+//-----------forward----------------
 assign rj_value  = es_fwd_valid && es_dest  == rf_raddr1 ? es_data
                  : ms_fwd_valid && ms_dest  == rf_raddr1 ? ms_data
                  : rf_we        && rf_waddr == rf_raddr1 ? rf_wdata
@@ -564,5 +509,59 @@ assign br_bus       = {br_stall,
                        br_taken,
                        br_taken_cancel,
                        br_target};
+
+//--------------mul&div----------------
+assign mul_signed   = inst_mul_w  | inst_mulh_w;
+assign mul_unsigned = inst_mulh_wu;
+assign mul_high     = inst_mulh_w | inst_mulh_wu;
+assign div_signed   = inst_div_w  | inst_mod_w;
+assign div_unsigned = inst_div_wu | inst_mod_wu;
+assign div_mod      = inst_div_w  | inst_div_wu;
+
+//-------------Exception-----------------
+assign cnt_op = {inst_rdcntvh_w, inst_rdcntvl_w};
+
+assign ds_ex = (inst_syscall || inst_break || ds_ex_ine || ds_has_int || fs_ex) && ds_valid;assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   | inst_nor    | inst_and     | inst_or   
+                    | inst_xor       | inst_slli_w  | inst_srli_w  | inst_srai_w | inst_addi_w | inst_ld_w    | inst_st_w   
+                    | inst_jirl      | inst_b       | inst_bl      | inst_beq    | inst_bne    | inst_lu12i_w | inst_slti   
+                    | inst_sltui     | inst_andi    | inst_ori     | inst_xori   | inst_sll_w  | inst_srl_w   | inst_sra_w  
+                    | inst_mul_w     | inst_mulh_w  | inst_mulh_wu | inst_div_w  | inst_mod_w  | inst_div_wu  | inst_mod_wu
+                    | inst_pcaddu12i | inst_blt     | inst_bge     | inst_bltu   | inst_bgeu   | inst_ld_b    | inst_ld_h 
+                    | inst_ld_bu     | inst_ld_hu   | inst_st_b    | inst_st_h   | inst_csrrd  | inst_csrwr   | inst_csrxchg
+                    | inst_ertn      | inst_syscall | inst_break   |inst_rdcntvl_w | inst_rdcntvh_w | inst_rdcntid_w
+                    | inst_tlb_srch  | inst_tlb_rd  | inst_tlb_wr  | inst_tlb_fill | inst_invtlb) || (inst_invtlb && (invtlb_op[3] || invtlb_op[4] || (invtlb_op == 5'h7)) );
+
+assign id_csr_num = inst_ertn ? `CSR_ERA 
+                  : (inst_syscall || inst_break || ds_ex_ine || ds_has_int || fs_ex) ? `CSR_EENTRY
+                  : inst_rdcntid_w  ? `CSR_TID
+                  : ds_inst[23:10];
+assign id_csr_ecode = ds_has_int   ? `ECODE_INT
+                    : fs_ex        ? `ECODE_ADE
+                    : ds_ex_ine    ? `ECODE_INE
+                    : inst_syscall ? `ECODE_SYS
+                    : inst_break   ? `ECODE_BRK
+                    : 6'h0;
+
+assign id_csr_esubcode = fs_ex ? `ESUBCODE_ADEF : 9'b0;
+assign id_csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_rdcntid_w;
+assign id_csr_we = inst_csrwr | inst_csrxchg;
+assign id_csr_wmask = inst_csrxchg ? rj_value : {32{1'b1}};
+
+//-----------------TLB----------------------
+assign tlb_op    = {inst_invtlb, inst_tlb_fill, inst_tlb_wr, inst_tlb_rd, inst_tlb_srch};
+assign invtlb_op = inst_invtlb ? ds_inst[4:0] : 5'b0;
+
+reg         ds_refetch;
+always @(posedge clk) begin
+    if (reset) begin
+        ds_refetch <= 1'b0;
+    end
+    else if (ds_flush_pipe) begin
+        ds_refetch <= 1'b0;
+    end
+    else if (ds_valid && ds_allowin && (inst_tlb_rd || inst_tlb_fill || inst_tlb_wr || inst_invtlb)) begin
+        ds_refetch <= 1'b1;
+    end
+end
 
 endmodule

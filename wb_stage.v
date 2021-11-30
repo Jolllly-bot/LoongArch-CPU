@@ -85,20 +85,32 @@ wire  [ 8:0] wb_esubcode;
 wire         eret_flush;
 wire         ws_flush_pipe;
 
-wire ws_has_int;
+wire         ws_has_int;
 wire  [ 7:0] ws_hw_int_in;
-wire  ws_ipi_int_in;
+wire         ws_ipi_int_in;
 wire  [31:0] ws_coreid_in;
 wire  [31:0] wb_vaddr;
 wire  [ 4:0] ws_tlb_op;
 wire  [31:0] tlb_asid_rvalue;
 wire  [31:0] tlb_ehi_rvalue;
 
-assign ws_hw_int_in = 8'b0;
-assign ws_ipi_int_in = 1'b0;
-assign ws_coreid_in = 32'b0;
+wire         tlb_hit;
+wire         tlb_re;
+wire [31: 0] tlb_idx_wvalue;
+wire [31: 0] tlb_ehi_wvalue;
+wire [31: 0] tlb_elo0_wvalue;
+wire [31: 0] tlb_elo1_wvalue;
+wire [31: 0] tlb_asid_wvalue;
+wire [31: 0] tlb_idx_rvalue;
+wire [31: 0] tlb_elo0_rvalue;
+wire [31: 0] tlb_elo1_rvalue;
+wire [31: 0] tlb_crmd_rvalue;
+wire [31: 0] tlb_dmw0_rvalue;
+wire [31: 0] tlb_dmw1_rvalue;
+wire [31: 0] csr_estat_rvalue;
 
-wire ws_refetch;
+reg  [ 4:0]  tlb_fill_index;
+wire         ws_refetch;
 
 assign {ws_refetch,
         ws_tlb_op,
@@ -148,39 +160,28 @@ always @(posedge clk) begin
     end
 end
 
-assign rf_we    = (ws_gr_we || ws_csr_re) && ws_valid && ~ws_ex;
-assign rf_waddr = ws_dest;
-//---------------------------------------
 assign rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
+assign rf_waddr = ws_dest;
+assign rf_we    = (ws_gr_we || ws_csr_re) && ws_valid && ~ws_ex;
 
+//--------------Exception----------------
 assign ws_ex = ms_to_ws_ex && ws_valid;
 assign eret_flush = ws_ertn && ws_valid;
+
+assign ws_hw_int_in = 8'b0;
+assign ws_ipi_int_in = 1'b0;
+assign ws_coreid_in = 32'b0;
+
 
 assign ws_flush_pipe = (ws_ex || eret_flush || ws_refetch) && ws_valid;
 assign ws_to_fs_bus = ws_refetch ? ws_pc + 4 : ws_csr_rvalue;
 
-wire           tlb_hit;
-wire           tlb_re;
-wire [31: 0]   tlb_idx_wvalue;
-wire [31: 0]   tlb_ehi_wvalue;
-wire [31: 0]   tlb_elo0_wvalue;
-wire [31: 0]   tlb_elo1_wvalue;
-wire [31: 0]   tlb_asid_wvalue;
 
-wire [31: 0]   tlb_idx_rvalue;
-wire [31: 0]   tlb_elo0_rvalue;
-wire [31: 0]   tlb_elo1_rvalue;
-wire [31: 0]   tlb_crmd_rvalue;
-wire [31: 0]   tlb_dmw0_rvalue;
-wire [31: 0]   tlb_dmw1_rvalue;
-wire [31: 0]   csr_estat_rvalue;
-
-reg  [ 4:0]   tlb_fill_index;
-
-assign tlb_hit = (ws_tlb_op == `TLB_SRCH) && s1_found; 
-assign tlb_re = r_e && ws_valid;
-assign tlb_idx_wvalue = {~s1_found || ~r_e, 1'b0, r_ps, 20'b0, s1_index};
-assign tlb_ehi_wvalue = {r_vppn,13'b0};
+//---------------TLB-------------------
+assign tlb_hit         = (ws_tlb_op == `TLB_SRCH) && s1_found; 
+assign tlb_re          = r_e && ws_valid;
+assign tlb_idx_wvalue  = {~s1_found || ~r_e, 1'b0, r_ps, 20'b0, s1_index};
+assign tlb_ehi_wvalue  = {r_vppn,13'b0};
 assign tlb_elo0_wvalue = {r_ppn0, 1'b0, r_g, r_mat0, r_plv0, r_d0, r_v0};
 assign tlb_elo1_wvalue = {r_ppn1, 1'b0, r_g, r_mat1, r_plv1, r_d1, r_v1};
 assign tlb_asid_wvalue = {22'b0,r_asid};
@@ -191,21 +192,21 @@ assign we = (ws_tlb_op == `TLB_WR) || (ws_tlb_op == `TLB_FILL);
 assign w_index = (ws_tlb_op == `TLB_WR) ? tlb_idx_rvalue[4:0]
                 :(ws_tlb_op == `TLB_FILL) ? tlb_fill_index[4:0]
                 :5'b0;
-assign w_e = (csr_estat_rvalue[21:16]==6'h3f) || ~tlb_idx_rvalue[31];
-assign w_ps = tlb_idx_rvalue[29:24];
+assign w_e    = (csr_estat_rvalue[21:16]==6'h3f) || ~tlb_idx_rvalue[31];
+assign w_ps   = tlb_idx_rvalue[29:24];
 assign w_vppn = tlb_ehi_rvalue[31:13];
 assign w_asid = tlb_asid_rvalue[9:0];
-assign w_g = tlb_elo1_rvalue[6] &  tlb_elo0_rvalue [6]; 
+assign w_g    = tlb_elo1_rvalue[6] &  tlb_elo0_rvalue [6]; 
 assign w_ppn0 = tlb_elo0_rvalue [31:8];
 assign w_plv0 = tlb_elo0_rvalue [3:2];
 assign w_mat0 = tlb_elo0_rvalue [5:4];
-assign w_d0 = tlb_elo0_rvalue [1];
-assign w_v0 = tlb_elo0_rvalue [0];
+assign w_d0   = tlb_elo0_rvalue [1];
+assign w_v0   = tlb_elo0_rvalue [0];
 assign w_ppn1 = tlb_elo1_rvalue [31:8];
 assign w_plv1 = tlb_elo1_rvalue [3:2];
 assign w_mat1 = tlb_elo1_rvalue [5:4];
-assign w_d1 = tlb_elo1_rvalue [1];
-assign w_v1 = tlb_elo1_rvalue [0];
+assign w_d1   = tlb_elo1_rvalue [1];
+assign w_v1   = tlb_elo1_rvalue [0];
 
 assign ws_asid_rvalue = tlb_asid_rvalue;
 assign ws_ehi_rvalue = tlb_ehi_rvalue;
@@ -223,43 +224,44 @@ always @(posedge clk)begin
         end
     end
 end
-csr u_csr(
-    .clk    (clk      ),
-    .reset  (reset    ),
-    .csr_re (ws_csr_re | ws_ertn),
-    .csr_num (ws_csr_num),
-    .csr_rvalue(ws_csr_rvalue),
-    .csr_we  (ws_csr_we),
-    .csr_wmask(ws_csr_wmask),
-    .csr_wvalue(ws_csr_wvalue),
-    .wb_ex(ws_ex),
-    .wb_ecode(ws_csr_ecode),
-    .wb_esubcode(wb_esubcode),
-    .eret_flush(eret_flush),
-    .wb_pc(ws_pc),
-    .has_int(ws_has_int),
-    .hw_int_in(ws_hw_int_in),
-    .ipi_int_in(ws_ipi_int_in),
-    .coreid_in(ws_coreid_in),
-    .wb_vaddr(wb_vaddr),
 
-    .tlb_op(ws_tlb_op), 
-    .tlb_hit(tlb_hit),
-    .tlb_re(tlb_re),
-    .tlb_idx_wvalue(tlb_idx_wvalue),
-    .tlb_ehi_wvalue(tlb_ehi_wvalue),
-    .tlb_elo0_wvalue(tlb_elo0_wvalue),
-    .tlb_elo1_wvalue(tlb_elo1_wvalue),
-    .tlb_asid_wvalue(tlb_asid_wvalue),
-    .tlb_idx_rvalue(tlb_idx_rvalue),
-    .tlb_ehi_rvalue(tlb_ehi_rvalue),
-    .tlb_elo0_rvalue(tlb_elo0_rvalue),
-    .tlb_elo1_rvalue(tlb_elo1_rvalue),
-    .tlb_asid_rvalue(tlb_asid_rvalue),
-    .tlb_crmd_rvalue(tlb_crmd_rvalue),
-    .tlb_dmw0_rvalue(tlb_dmw0_rvalue),
-    .tlb_dmw1_rvalue(tlb_dmw1_rvalue),
-    .csr_estat_rvalue(csr_estat_rvalue)
+csr u_csr(
+    .clk         (clk      ),
+    .reset       (reset    ),
+    .csr_re      (ws_csr_re | ws_ertn),
+    .csr_num     (ws_csr_num),
+    .csr_rvalue  (ws_csr_rvalue),
+    .csr_we      (ws_csr_we),
+    .csr_wmask   (ws_csr_wmask),
+    .csr_wvalue  (ws_csr_wvalue),
+    .wb_ex       (ws_ex),
+    .wb_ecode    (ws_csr_ecode),
+    .wb_esubcode (wb_esubcode),
+    .eret_flush  (eret_flush),
+    .wb_pc       (ws_pc),
+    .has_int     (ws_has_int),
+    .hw_int_in   (ws_hw_int_in),
+    .ipi_int_in  (ws_ipi_int_in),
+    .coreid_in   (ws_coreid_in),
+    .wb_vaddr    (wb_vaddr),
+
+    .tlb_op           (ws_tlb_op), 
+    .tlb_hit          (tlb_hit),
+    .tlb_re           (tlb_re),
+    .tlb_idx_wvalue   (tlb_idx_wvalue),
+    .tlb_ehi_wvalue   (tlb_ehi_wvalue),
+    .tlb_elo0_wvalue  (tlb_elo0_wvalue),
+    .tlb_elo1_wvalue  (tlb_elo1_wvalue),
+    .tlb_asid_wvalue  (tlb_asid_wvalue),
+    .tlb_idx_rvalue   (tlb_idx_rvalue),
+    .tlb_ehi_rvalue   (tlb_ehi_rvalue),
+    .tlb_elo0_rvalue  (tlb_elo0_rvalue),
+    .tlb_elo1_rvalue  (tlb_elo1_rvalue),
+    .tlb_asid_rvalue  (tlb_asid_rvalue),
+    .tlb_crmd_rvalue  (tlb_crmd_rvalue),
+    .tlb_dmw0_rvalue  (tlb_dmw0_rvalue),
+    .tlb_dmw1_rvalue  (tlb_dmw1_rvalue),
+    .csr_estat_rvalue (csr_estat_rvalue)
 );
 
 // debug info generate

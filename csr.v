@@ -19,24 +19,24 @@ module csr(
   input         ipi_int_in,
   input  [31:0] coreid_in,
   input  [31:0] wb_vaddr,
-  input  [4:0] tlb_op, // Search read write fill invalid
-  input            tlb_hit,
-  input            tlb_re,
-  input  [31: 0]   tlb_idx_wvalue,
-  input  [31: 0]   tlb_ehi_wvalue,
-  input  [31: 0]   tlb_elo0_wvalue,
-  input  [31: 0]   tlb_elo1_wvalue,
-  input  [31: 0]   tlb_asid_wvalue,
+  input  [ 4:0] tlb_op, // Search read write fill invalid
+  input         tlb_hit,
+  input         tlb_re,
+  input  [31:0] tlb_idx_wvalue,
+  input  [31:0] tlb_ehi_wvalue,
+  input  [31:0] tlb_elo0_wvalue,
+  input  [31:0] tlb_elo1_wvalue,
+  input  [31:0] tlb_asid_wvalue,
 
-  output [31: 0]   tlb_idx_rvalue,
-  output [31: 0]   tlb_ehi_rvalue,
-  output [31: 0]   tlb_elo0_rvalue,
-  output [31: 0]   tlb_elo1_rvalue,
-  output [31: 0]   tlb_asid_rvalue,
-  output [31: 0]   tlb_crmd_rvalue,
-  output [31: 0]   tlb_dmw0_rvalue,
-  output [31: 0]   tlb_dmw1_rvalue,
-  output [31: 0]   csr_estat_rvalue
+  output [31:0] tlb_idx_rvalue,
+  output [31:0] tlb_ehi_rvalue,
+  output [31:0] tlb_elo0_rvalue,
+  output [31:0] tlb_elo1_rvalue,
+  output [31:0] tlb_asid_rvalue,
+  output [31:0] tlb_crmd_rvalue,
+  output [31:0] tlb_dmw0_rvalue,
+  output [31:0] tlb_dmw1_rvalue,
+  output [31:0] csr_estat_rvalue
 );
 
 //CRMD
@@ -438,8 +438,7 @@ end
 
 assign tlb_ehi_rvalue = {tlb_ehi_vppn,13'h0};
 
-//TLBLO
-
+//TLBELO
 reg          tlb_elo0_v;
 reg          tlb_elo0_d;
 reg  [1:0] tlb_elo0_plv;
@@ -538,7 +537,7 @@ always @(posedge clk ) begin
 end
 assign tlb_entry_rvalue = {tlb_entry_pa, 6'b0}; 
 
-//
+
 assign has_int = ((csr_estat_is[11:0] & csr_ecfg_lie[11:0]) != 12'b0) && (csr_crmd_ie == 1'b1);
 
 assign csr_rvalue =   {32{csr_num ==`CSR_CRMD}}      & csr_crmd_rvalue

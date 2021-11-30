@@ -65,11 +65,23 @@ wire [31:0] es_pc         ;
 
 wire        es_res_from_mem;
 wire [ 4:0] es_load_op     ;
-wire [ 2:0] es_st_op    ;
+wire [ 2:0] es_st_op       ;
 wire [31:0] es_st_data     ;
 wire [ 3:0] es_st_strb     ;
 wire [31:0] es_vaddr       ;
 wire [ 1:0] es_vaddr_type  ;
+
+wire        es_fwd_valid   ;
+wire        es_blk_valid   ;
+wire [31:0] es_fwd_result  ;
+wire        es_mem_req     ;
+
+wire [31:0] es_alu_src1   ;
+wire [31:0] es_alu_src2   ;
+wire [31:0] es_alu_result ;
+wire [31:0] es_result     ;
+reg  [ 3:0] div_cycle     ;
+reg  [ 3:0] divu_cycle    ;
 
 wire        es_mul_signed  ;
 wire        es_mul_unsigned;
@@ -78,15 +90,15 @@ wire        es_div_signed  ;
 wire        es_div_unsigned;
 wire        es_div_mod     ;
 
-wire es_ex;
-wire ds_to_es_ex;
+wire        es_ex;
+wire        ds_to_es_ex;
 wire [13:0] ds_csr_num;
 wire [13:0] es_csr_num;
-wire es_csr_we;
-wire es_csr_re;
+wire        es_csr_we;
+wire        es_csr_re;
 wire [31:0] es_csr_wmask;
-wire es_ertn;
-wire es_syscall;
+wire        es_ertn;
+wire        es_syscall;
 wire [31:0] es_csr_wvalue;
 wire [ 8:0] es_csr_esubcode;
 wire [ 5:0] ds_csr_ecode;
@@ -132,17 +144,6 @@ assign {es_refetch,
         es_pc             //31 :0
        } = ds_to_es_bus_r;
 
-assign invtlb_valid = (es_tlb_op == `TLB_INV);
-wire [31:0] es_alu_src1   ;
-wire [31:0] es_alu_src2   ;
-wire [31:0] es_alu_result ;
-wire [31:0] es_result     ;
-reg  [3:0] div_cycle      ;
-reg  [3:0] divu_cycle     ;
-
-assign es_csr_wvalue = es_rkd_value; //TODO
-
-assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
 
 assign es_to_ms_bus = {es_refetch  ,
                        es_tlb_op   ,
@@ -165,13 +166,7 @@ assign es_to_ms_bus = {es_refetch  ,
                        es_pc             //31:0
                       };
 
-//forward path
-wire es_fwd_valid;
-wire es_blk_valid;
-wire [31:0] es_fwd_result;
-
-wire es_mem_req;
-
+//------------forward-------------
 assign es_mem_req = es_res_from_mem || es_mem_we;
 
 assign es_fwd_result = es_cnt_op[1] ? timer_cnt[63:32]
@@ -232,7 +227,7 @@ alu u_alu(
     .alu_result (es_alu_result)
     );
 
-//-------------------------------------------
+//----------------mul&div--------------------
 wire [63:0] unsigned_prod         ;
 wire [63:0] signed_prod           ;
 
@@ -396,24 +391,29 @@ assign es_st_strb = { 4{es_st_op[0]}} & (4'b0001 << es_vaddr_type)
                   | { 4{es_st_op[1]}} & (4'b0011 << es_vaddr_type)
                   | { 4{es_st_op[2]}} & 4'b1111;
 
+//---------Exception-------------
 assign es_ale_h = es_vaddr_type[0] && (es_load_op[1] || es_load_op[4] || es_st_op[1]);
 assign es_ale_w = es_vaddr_type && (es_load_op[2] || es_st_op[2]);
 
 assign es_csr_ecode = (es_ale_h || es_ale_w) ? `ECODE_ALE : ds_csr_ecode;
 assign es_csr_num = (es_ale_h || es_ale_w) ? `CSR_EENTRY : ds_csr_num;
+assign es_csr_wvalue = es_rkd_value; 
 
 assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // exception from exe, mem, wb
 
+assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
+
+//------------TLB------------------
 assign s1_vppn = es_tlb_op == `TLB_INV ? es_rkd_value[31:13] : tlb_ehi_rvalue[31:13];
 assign s1_asid = es_tlb_op == `TLB_INV ? es_rj_value[9:0] : tlb_asid_rvalue[9:0];
 assign s1_va_bit12 = 1'b0;
 
+assign invtlb_valid = (es_tlb_op == `TLB_INV);
+
 assign tlb_blk = ms_tlb_blk && es_tlb_op == `TLB_SRCH;
 
-assign data_sram_size = ( es_load_op[2] || es_st_op[2] ) ? 2'd2 :
-                        ( es_load_op[1] || es_load_op[4] || es_st_op[1] ) ? 2'd1 :
-                        2'd0;
 
+// data sram
 reg data_sram_process;
 always@(posedge clk) begin
     if(reset) begin
@@ -429,7 +429,10 @@ end
 assign data_sram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid && ms_allowin /* && ~data_sram_process */;
 assign data_sram_wr     =  es_mem_we && ~es_st_ex && ~es_flush_pipe;
 assign data_sram_wstrb  = (es_mem_we && ~es_st_ex && ~es_flush_pipe) ? es_st_strb : 4'h0;
-assign data_sram_addr  = es_alu_result;
-assign data_sram_wdata = es_st_data;
+assign data_sram_addr   = es_alu_result;
+assign data_sram_wdata  = es_st_data;
+assign data_sram_size   = ( es_load_op[2] || es_st_op[2] ) ? 2'd2 :
+                          ( es_load_op[1] || es_load_op[4] || es_st_op[1] ) ? 2'd1 :
+                          2'd0;
 
 endmodule

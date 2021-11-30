@@ -222,7 +222,7 @@ axi_bridge u_axi_bridge(
 
 // IF stage
 if_stage if_stage(
-    .clk            (aclk            ),
+    .clk            (aclk           ),
     .reset          (reset          ),
     //allowin
     .ds_allowin     (ds_allowin     ),
@@ -402,7 +402,7 @@ wb_stage wb_stage(
     .r_mat1        (r_mat1         ),
     .r_d1          (r_d1           ),
     .r_v1          (r_v1           ),
-    .ws_ehi_rvalue(tlb_ehi_rvalue ),
+    .ws_ehi_rvalue(tlb_ehi_rvalue  ),
     .ws_asid_rvalue(tlb_asid_rvalue)
 );
 
