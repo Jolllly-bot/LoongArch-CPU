@@ -199,6 +199,20 @@ wire        ds_has_int;
 wire        ds_ex_ine;
 wire [1:0]  cnt_op;
 
+reg         ds_refetch;
+wire        refetch_valid;
+always @(posedge clk) begin
+    if (reset) begin
+        ds_refetch <= 1'b0;
+    end
+    else if (ds_flush_pipe) begin
+        ds_refetch <= 1'b0;
+    end
+    else if (ds_valid && ds_allowin && (inst_tlb_rd || inst_tlb_fill || inst_tlb_wr || inst_invtlb)) begin
+        ds_refetch <= 1'b1;
+    end
+end
+
 assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   | inst_nor    | inst_and     | inst_or   
                     | inst_xor       | inst_slli_w  | inst_srli_w  | inst_srai_w | inst_addi_w | inst_ld_w    | inst_st_w   
                     | inst_jirl      | inst_b       | inst_bl      | inst_beq    | inst_bne    | inst_lu12i_w | inst_slti   
@@ -207,9 +221,10 @@ assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   
                     | inst_pcaddu12i | inst_blt     | inst_bge     | inst_bltu   | inst_bgeu   | inst_ld_b    | inst_ld_h 
                     | inst_ld_bu     | inst_ld_hu   | inst_st_b    | inst_st_h   | inst_csrrd  | inst_csrwr   | inst_csrxchg
                     | inst_ertn      | inst_syscall | inst_break   |inst_rdcntvl_w | inst_rdcntvh_w | inst_rdcntid_w
-                    | inst_tlb_srch  | inst_tlb_rd  | inst_tlb_wr  | inst_tlb_fill | inst_invtlb);
+                    | inst_tlb_srch  | inst_tlb_rd  | inst_tlb_wr  | inst_tlb_fill | inst_invtlb) || (inst_invtlb && (invtlb_op[3] || invtlb_op[4] || (invtlb_op == 5'h7)) );
 
-assign ds_to_es_bus = {tlb_op      ,
+assign ds_to_es_bus = {ds_refetch  ,
+                       tlb_op      ,
                        invtlb_op   ,
                        cnt_op      ,
                        id_csr_esubcode,
@@ -381,7 +396,7 @@ assign inst_tlb_srch = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] &
 assign inst_tlb_rd   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b01011) & (rj == 5'h0) & (rd == 5'h0);
 assign inst_tlb_wr   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b01100) & (rj == 5'h0) & (rd == 5'h0);
 assign inst_tlb_fill = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b01101) & (rj == 5'h0) & (rd == 5'h0);
-assign inst_invtlb   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b10011);
+assign inst_invtlb   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h13];
 
 assign cnt_op = {inst_rdcntvh_w, inst_rdcntvl_w};
 
@@ -487,7 +502,7 @@ assign src2_is_imm   = inst_slli_w |
 assign res_from_mem  = inst_ld_w | inst_ld_b | inst_ld_bu | inst_ld_h | inst_ld_hu;
 assign dst_is_r1     = inst_bl;
 assign gr_we         = ~inst_st_w & ~inst_st_b & ~inst_st_h 
-                     & ~inst_beq & ~inst_bne & ~inst_b & ~inst_blt & ~inst_bge & ~inst_bltu & ~inst_bgeu;
+                     & ~inst_beq & ~inst_bne & ~inst_b & ~inst_blt & ~inst_bge & ~inst_bltu & ~inst_bgeu & ~inst_invtlb;
 assign mem_we        = inst_st_w | inst_st_b | inst_st_h;
 assign dest          = dst_is_r1 ? 5'd1 
                      : inst_rdcntid_w ? rj 

@@ -42,6 +42,7 @@ module exe_stage(
     input          s1_d,
     input          s1_v,
     // invtlb opcode
+    output         invtlb_valid,
     output  [ 4:0] invtlb_op,
     input   [31:0] tlb_asid_rvalue,
     input   [31:0] tlb_ehi_rvalue
@@ -96,8 +97,10 @@ wire        es_ale_w;
 wire [ 1:0] es_cnt_op;
 wire [ 4:0] es_tlb_op;
 wire        tlb_blk;
+wire        es_refetch;
 
-assign {es_tlb_op   ,
+assign {es_refetch,
+        es_tlb_op   ,
         invtlb_op   ,
         es_cnt_op,
         es_csr_esubcode,
@@ -129,6 +132,7 @@ assign {es_tlb_op   ,
         es_pc             //31 :0
        } = ds_to_es_bus_r;
 
+assign invtlb_valid = (es_tlb_op == `TLB_INV);
 wire [31:0] es_alu_src1   ;
 wire [31:0] es_alu_src2   ;
 wire [31:0] es_alu_result ;
@@ -140,7 +144,8 @@ assign es_csr_wvalue = es_rkd_value; //TODO
 
 assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
 
-assign es_to_ms_bus = {es_tlb_op   ,
+assign es_to_ms_bus = {es_refetch  ,
+                       es_tlb_op   ,
                        es_mem_req  ,
                        es_vaddr    ,
                        es_csr_esubcode,
@@ -399,8 +404,8 @@ assign es_csr_num = (es_ale_h || es_ale_w) ? `CSR_EENTRY : ds_csr_num;
 
 assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // exception from exe, mem, wb
 
-assign s1_vppn = es_tlb_op == `TLB_SRCH ? es_rkd_value[31:13] : tlb_ehi_rvalue[31:13];
-assign s1_asid = es_tlb_op == `TLB_SRCH ? es_rj_value[9:0] : tlb_asid_rvalue[9:0];
+assign s1_vppn = es_tlb_op == `TLB_INV ? es_rkd_value[31:13] : tlb_ehi_rvalue[31:13];
+assign s1_asid = es_tlb_op == `TLB_INV ? es_rj_value[9:0] : tlb_asid_rvalue[9:0];
 assign s1_va_bit12 = 1'b0;
 
 assign tlb_blk = ms_tlb_blk && es_tlb_op == `TLB_SRCH;

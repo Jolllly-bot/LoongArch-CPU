@@ -98,7 +98,10 @@ assign ws_hw_int_in = 8'b0;
 assign ws_ipi_int_in = 1'b0;
 assign ws_coreid_in = 32'b0;
 
-assign {ws_tlb_op,
+wire ws_refetch;
+
+assign {ws_refetch,
+        ws_tlb_op,
         wb_vaddr,
         wb_esubcode,
         ms_to_ws_ex ,
@@ -150,17 +153,11 @@ assign rf_waddr = ws_dest;
 //---------------------------------------
 assign rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
 
-// debug info generate
-assign debug_wb_pc       = ws_pc;
-assign debug_wb_rf_wen   = {4{rf_we}};
-assign debug_wb_rf_wnum  = ws_dest;
-assign debug_wb_rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
-
 assign ws_ex = ms_to_ws_ex && ws_valid;
 assign eret_flush = ws_ertn && ws_valid;
 
-assign ws_flush_pipe = (ws_ex || eret_flush) && ws_valid;
-assign ws_to_fs_bus = ws_csr_rvalue;
+assign ws_flush_pipe = (ws_ex || eret_flush || ws_refetch) && ws_valid;
+assign ws_to_fs_bus = ws_refetch ? ws_pc + 4 : ws_csr_rvalue;
 
 wire           tlb_hit;
 wire           tlb_re;
@@ -265,6 +262,10 @@ csr u_csr(
     .csr_estat_rvalue(csr_estat_rvalue)
 );
 
-
+// debug info generate
+assign debug_wb_pc       = ws_pc;
+assign debug_wb_rf_wen   = {4{rf_we}};
+assign debug_wb_rf_wnum  = ws_dest;
+assign debug_wb_rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
 
 endmodule

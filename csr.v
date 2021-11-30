@@ -124,8 +124,10 @@ module csr(
   reg  [ 8:0] csr_estat_esubcode;
 
   always @(posedge clk) begin
-    if (reset)
-        csr_estat_is[1:0] <= 2'b0;
+    if (reset)begin
+      csr_estat_is[1:0] <= 2'b0;
+      csr_estat_is[11] <= 1'b0;
+    end    
     else if (csr_we && csr_num==`CSR_ESTAT)
         csr_estat_is[1:0] <= csr_wmask[`CSR_ESTAT_IS10]&csr_wvalue[`CSR_ESTAT_IS10] 
                           | ~csr_wmask[`CSR_ESTAT_IS10]&csr_estat_is[1:0];

@@ -29,6 +29,7 @@ module tlb
     output        s1_d,
     output        s1_v,
     // invtlb opcode
+    input  invtlb_valid,
     input  [ 4:0] invtlb_op,
     // write port
     input         we, 
@@ -86,12 +87,12 @@ module tlb
     
     wire [3:0] inv_cond [TLBNUM-1:0];
     wire [TLBNUM-1 :0]inv_match;
-    wire invtlb_valid;
+
     
     wire [15:0] match0;
     wire [15:0] match1;
 
-    assign invtlb_valid = |invtlb_op;
+ 
 
     genvar i;
     generate for (i=0; i<TLBNUM; i=i+1) begin: gen_for_tlb_match

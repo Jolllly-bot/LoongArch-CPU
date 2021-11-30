@@ -47,9 +47,10 @@ wire [ 8:0] ms_csr_esubcode;
 wire [31:0] ms_vaddr;
 wire ms_mem_req;
 wire [ 4:0] ms_tlb_op;
+wire        ms_refetch;
 
-
-assign {ms_tlb_op  ,
+assign {ms_refetch ,
+        ms_tlb_op  ,
         ms_mem_req ,
         ms_vaddr,
         ms_csr_esubcode ,
@@ -75,7 +76,8 @@ wire [31:0] ms_final_result;
 assign ms_ex = es_to_ms_ex && ms_to_ws_valid; 
 assign ms_to_es_ex = (es_to_ms_ex || ms_ertn) && ms_to_ws_valid;
 
-assign ms_to_ws_bus = {ms_tlb_op,
+assign ms_to_ws_bus = {ms_refetch  ,
+                       ms_tlb_op,
                        ms_vaddr,
                        ms_csr_esubcode,
                        ms_ex       ,

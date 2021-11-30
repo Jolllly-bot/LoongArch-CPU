@@ -119,6 +119,7 @@ wire  [ 1:0] s1_mat;
 wire         s1_d;
 wire         s1_v;
 // invtlb opcode
+wire         invtlb_valid;
 wire  [ 4:0] invtlb_op;
  // write port
 wire         we; //w(rite) e(nable)
@@ -317,6 +318,7 @@ exe_stage exe_stage(
     .s1_d          (s1_d           ),
     .s1_v          (s1_v           ),
     // invtlb opcode
+    .invtlb_valid  (invtlb_valid   ),
     .invtlb_op     (invtlb_op      ),
     .tlb_ehi_rvalue(tlb_ehi_rvalue ),
     .tlb_asid_rvalue(tlb_asid_rvalue),
@@ -432,6 +434,7 @@ tlb tlb(
     .s1_d          (s1_d           ),
     .s1_v          (s1_v           ),
     // invtlb opcode
+    .invtlb_valid  (invtlb_valid   ),
     .invtlb_op     (invtlb_op      ),
     // write port
     .we            (we             ), //w(rite) e(nable)
