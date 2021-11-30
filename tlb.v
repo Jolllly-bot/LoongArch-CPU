@@ -85,7 +85,7 @@ module tlb
     reg tlb_v1 [TLBNUM-1:0];
     
     wire [3:0] inv_cond [TLBNUM-1:0];
-    wire [TLBNUM-1 :0] inv_match;
+    wire [TLBNUM-1 :0]inv_match;
     wire invtlb_valid;
     
     wire [15:0] match0;
@@ -208,5 +208,6 @@ begin
         tlb_v1  [w_index] <= w_v1;
  
     end
+
 end
 endmodule

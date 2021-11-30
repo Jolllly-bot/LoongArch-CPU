@@ -399,7 +399,7 @@ assign id_csr_ecode = ds_has_int   ? `ECODE_INT
                     : 6'h0;
 
 assign tlb_op    = {inst_invtlb, inst_tlb_fill, inst_tlb_wr, inst_tlb_rd, inst_tlb_srch};
-assign invtlb_op = ds_inst[4:0];
+assign invtlb_op = inst_invtlb ? ds_inst[4:0] : 5'b0;
 
 assign id_csr_esubcode = fs_ex ? `ESUBCODE_ADEF : 9'b0;
 assign id_csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_rdcntid_w;
