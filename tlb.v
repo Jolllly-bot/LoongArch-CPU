@@ -84,9 +84,14 @@ module tlb
     reg tlb_d1 [TLBNUM-1:0];
     reg tlb_v1 [TLBNUM-1:0];
     
+    wire [3:0] inv_cond [TLBNUM-1:0];
+    wire [TLBNUM-1 :0] inv_match;
+    wire invtlb_valid;
     
     wire [15:0] match0;
     wire [15:0] match1;
+
+    assign invtlb_valid = |invtlb_op;
 
     genvar i;
     generate for (i=0; i<TLBNUM; i=i+1) begin: gen_for_tlb_match
@@ -99,8 +104,29 @@ module tlb
                         && (tlb_ps4MB[i] || s1_vppn[9:0]==tlb_vppn[i][9:0]) 
                         && ((s1_asid == tlb_asid[i]) || tlb_g[i])
                         && tlb_e[i];
+        
+        assign inv_cond[i][0] =~tlb_g[i];
+        assign inv_cond[i][1] = tlb_g[i];
+        assign inv_cond[i][2] = s1_asid == tlb_asid[i];
+        assign inv_cond[i][3] = (s1_vppn[18:10]==tlb_vppn[i][18:10]) 
+                        && (tlb_ps4MB[i]||s1_vppn[9:0]==tlb_vppn[i][ 9: 0]);
+        assign inv_match[i] = ((invtlb_op==5'h0||invtlb_op==5'h1) & (inv_cond[i][0] || inv_cond[i][1]))
+                            ||((invtlb_op==5'h2) & (inv_cond[i][1]))
+                            ||((invtlb_op==5'h3) & (inv_cond[i][0]))
+                            ||((invtlb_op==5'h4) & (inv_cond[i][0]) & (inv_cond[i][2]))
+                            ||((invtlb_op==5'h5) & (inv_cond[i][0]) & inv_cond[i][2] & inv_cond[i][3])
+                            ||((invtlb_op==5'h6) & (inv_cond[i][1] | inv_cond[i][2]) & inv_cond[i][3]);
+       
+        always @(posedge clk )begin
+            if(!we || !(w_index==i))begin
+                if(inv_match[i] && invtlb_valid)begin
+                   tlb_e[i] <= 1'b0;
+                end
+            end      
+        end
     end endgenerate
     
+
     assign s0_found = |match0;
     assign s1_found = |match1;
 
