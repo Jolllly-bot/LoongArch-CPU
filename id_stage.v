@@ -381,7 +381,7 @@ assign inst_tlb_srch = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] &
 assign inst_tlb_rd   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b01011) & (rj == 5'h0) & (rd == 5'h0);
 assign inst_tlb_wr   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b01100) & (rj == 5'h0) & (rd == 5'h0);
 assign inst_tlb_fill = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b01101) & (rj == 5'h0) & (rd == 5'h0);
-assign inst_invtlb   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h10] & (rk == 5'b10011);
+assign inst_invtlb   = op_31_26_d[6'h01] & op_25_22_d[4'h9] & op_21_20_d[2'h0] & op_19_15_d[5'h13];
 
 assign cnt_op = {inst_rdcntvh_w, inst_rdcntvl_w};
 
