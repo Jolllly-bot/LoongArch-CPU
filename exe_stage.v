@@ -96,8 +96,10 @@ wire        es_ale_w;
 wire [ 1:0] es_cnt_op;
 wire [ 4:0] es_tlb_op;
 wire        tlb_blk;
+wire        es_refetch;
 
-assign {es_tlb_op   ,
+assign {es_refetch,
+        es_tlb_op   ,
         invtlb_op   ,
         es_cnt_op,
         es_csr_esubcode,
@@ -140,7 +142,8 @@ assign es_csr_wvalue = es_rkd_value; //TODO
 
 assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
 
-assign es_to_ms_bus = {es_tlb_op   ,
+assign es_to_ms_bus = {es_refetch  ,
+                       es_tlb_op   ,
                        es_mem_req  ,
                        es_vaddr    ,
                        es_csr_esubcode,

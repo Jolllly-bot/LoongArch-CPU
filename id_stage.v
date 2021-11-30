@@ -199,6 +199,20 @@ wire        ds_has_int;
 wire        ds_ex_ine;
 wire [1:0]  cnt_op;
 
+reg         ds_refetch;
+wire        refetch_valid;
+always @(posedge clk) begin
+    if (reset) begin
+        ds_refetch <= 1'b0;
+    end
+    else if (ds_flush_pipe) begin
+        ds_refetch <= 1'b0;
+    end
+    else if (ds_valid && ds_allowin && (inst_tlb_rd || inst_tlb_fill || inst_tlb_wr || inst_invtlb)) begin
+        ds_refetch <= 1'b1;
+    end
+end
+
 assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   | inst_nor    | inst_and     | inst_or   
                     | inst_xor       | inst_slli_w  | inst_srli_w  | inst_srai_w | inst_addi_w | inst_ld_w    | inst_st_w   
                     | inst_jirl      | inst_b       | inst_bl      | inst_beq    | inst_bne    | inst_lu12i_w | inst_slti   
@@ -209,7 +223,8 @@ assign ds_ex_ine = !(inst_add_w     | inst_sub_w   | inst_slt     | inst_sltu   
                     | inst_ertn      | inst_syscall | inst_break   |inst_rdcntvl_w | inst_rdcntvh_w | inst_rdcntid_w
                     | inst_tlb_srch  | inst_tlb_rd  | inst_tlb_wr  | inst_tlb_fill | inst_invtlb);
 
-assign ds_to_es_bus = {tlb_op      ,
+assign ds_to_es_bus = {ds_refetch  ,
+                       tlb_op      ,
                        invtlb_op   ,
                        cnt_op      ,
                        id_csr_esubcode,
