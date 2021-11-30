@@ -71,6 +71,7 @@ wire [`BR_BUS_WD       -1:0] br_bus;
 wire [                 31:0] ws_to_fs_bus;
 wire                         ws_flush_pipe;
 wire                         ms_ex;
+wire                         ms_tlb_blk;
 
 wire        inst_sram_req;  
 wire        inst_sram_wr;   
@@ -318,7 +319,8 @@ exe_stage exe_stage(
     // invtlb opcode
     .invtlb_op     (invtlb_op      ),
     .tlb_ehi_rvalue(tlb_ehi_rvalue ),
-    .tlb_asid_rvalue(tlb_asid_rvalue)
+    .tlb_asid_rvalue(tlb_asid_rvalue),
+    .ms_tlb_blk    (ms_tlb_blk     )
 );
 // MEM stage
 mem_stage mem_stage(
@@ -339,7 +341,8 @@ mem_stage mem_stage(
     .data_sram_rdata(data_sram_rdata),
     .data_sram_data_ok(data_sram_data_ok),
     .ms_flush_pipe  (ws_flush_pipe  ),
-    .ms_to_es_ex    (ms_ex)
+    .ms_to_es_ex    (ms_ex          ),
+    .ms_tlb_blk     (ms_tlb_blk     )
 );
 // WB stage
 wb_stage wb_stage(
@@ -359,6 +362,9 @@ wb_stage wb_stage(
     .debug_wb_rf_wdata(debug_wb_rf_wdata),
     .ws_to_fs_bus     (ws_to_fs_bus     ),
     .ws_flush_pipe    (ws_flush_pipe    ),
+    // search port
+    .s1_found      (s1_found       ),
+    .s1_index      (s1_index       ),
     // write port
     .we            (we             ), //w(rite) e(nable)
     .w_index       (w_index        ),

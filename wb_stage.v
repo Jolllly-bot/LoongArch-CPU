@@ -17,6 +17,9 @@ module wb_stage(
     output [31:0] debug_wb_rf_wdata,
     output [31:0] ws_to_fs_bus,
     output        ws_flush_pipe,
+    // search port
+    input         s1_found,
+    input  [ 3:0] s1_index,
     // write port
     output         we, //w(rite) e(nable)
     output  [ 3:0] w_index,
@@ -88,8 +91,6 @@ wire  ws_ipi_int_in;
 wire  [31:0] ws_coreid_in;
 wire  [31:0] wb_vaddr;
 wire  [ 4:0] ws_tlb_op;
-wire         ws_s1_found;
-wire         ws_s1_index;
 wire  [31:0] tlb_asid_rvalue;
 wire  [31:0] tlb_ehi_rvalue;
 
@@ -97,9 +98,7 @@ assign ws_hw_int_in = 8'b0;
 assign ws_ipi_int_in = 1'b0;
 assign ws_coreid_in = 32'b0;
 
-assign {ws_s1_index,
-        ws_s1_found,
-        ws_tlb_op,
+assign {ws_tlb_op,
         wb_vaddr,
         wb_esubcode,
         ms_to_ws_ex ,
@@ -181,9 +180,9 @@ wire [31: 0]   csr_estat_rvalue;
 
 reg  [ 4:0]   tlb_fill_index;
 
-assign tlb_hit = (ws_tlb_op == `TLB_SRCH) && ws_s1_found; 
+assign tlb_hit = (ws_tlb_op == `TLB_SRCH) && s1_found; 
 assign tlb_re = r_e && ws_valid;
-assign tlb_idx_wvalue = {~ws_s1_found|~r_e, 1'b0, r_ps, 20'b0, ws_s1_index};
+assign tlb_idx_wvalue = {~s1_found || ~r_e, 1'b0, r_ps, 20'b0, s1_index};
 assign tlb_ehi_wvalue = {r_vppn,13'b0};
 assign tlb_elo0_wvalue = {r_ppn0, 1'b0, r_g, r_mat0, r_plv0, r_d0, r_v0};
 assign tlb_elo1_wvalue = {r_ppn1, 1'b0, r_g, r_mat1, r_plv1, r_d1, r_v1};

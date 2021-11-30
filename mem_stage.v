@@ -18,7 +18,8 @@ module mem_stage(
     input  [31                 :0] data_sram_rdata,
     input                          data_sram_data_ok,
     input  ms_flush_pipe,
-    output ms_to_es_ex
+    output ms_to_es_ex,
+    output ms_tlb_blk
 );
 
 reg         ms_valid;
@@ -46,13 +47,9 @@ wire [ 8:0] ms_csr_esubcode;
 wire [31:0] ms_vaddr;
 wire ms_mem_req;
 wire [ 4:0] ms_tlb_op;
-wire        ms_s1_found;
-wire        ms_s1_index;
 
 
-assign {ms_s1_index ,
-        ms_s1_found ,
-        ms_tlb_op   ,
+assign {ms_tlb_op  ,
         ms_mem_req ,
         ms_vaddr,
         ms_csr_esubcode ,
@@ -78,9 +75,7 @@ wire [31:0] ms_final_result;
 assign ms_ex = es_to_ms_ex && ms_to_ws_valid; 
 assign ms_to_es_ex = (es_to_ms_ex || ms_ertn) && ms_to_ws_valid;
 
-assign ms_to_ws_bus = {ms_s1_index,
-                       ms_s1_found,
-                       ms_tlb_op,
+assign ms_to_ws_bus = {ms_tlb_op,
                        ms_vaddr,
                        ms_csr_esubcode,
                        ms_ex       ,
@@ -100,10 +95,10 @@ assign ms_to_ws_bus = {ms_s1_index,
 
 //ms forward path
 wire ms_fwd_valid;
-wire ms_tlb_block;
+wire ms_tlb_blk;
 
 assign ms_fwd_valid = ms_to_ws_valid && ms_gr_we;
-assign ms_tlb_block = ms_to_ws_valid 
+assign ms_tlb_blk = ms_to_ws_valid 
                 && (ms_csr_we && (ms_csr_num == `CSR_ASID || ms_csr_num == `CSR_TLBEHI))
                 && (ms_tlb_op == `TLB_RD); //TODO
 

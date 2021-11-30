@@ -27,6 +27,7 @@ module exe_stage(
     
     input         es_flush_pipe,
     input         ms_ex,
+    input         ms_tlb_blk,
 
     // search port 1 (for load/store)
     output  [18:0] s1_vppn,
@@ -94,6 +95,7 @@ wire        es_ale_h;
 wire        es_ale_w;
 wire [ 1:0] es_cnt_op;
 wire [ 4:0] es_tlb_op;
+wire        tlb_blk;
 
 assign {es_tlb_op   ,
         invtlb_op   ,
@@ -138,9 +140,7 @@ assign es_csr_wvalue = es_rkd_value; //TODO
 
 assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
 
-assign es_to_ms_bus = {s1_index    ,
-                       s1_found    ,
-                       es_tlb_op   ,
+assign es_to_ms_bus = {es_tlb_op   ,
                        es_mem_req  ,
                        es_vaddr    ,
                        es_csr_esubcode,
@@ -193,7 +193,8 @@ assign es_div_valid = (~(es_div_signed | es_div_unsigned))
                      | (es_div_unsigned & unsigned_dout_tvalid);
 
 assign es_ready_go    = (es_flush_pipe || es_div_valid) 
-                     && ((data_sram_req && data_sram_addr_ok) || !es_mem_req || es_ale_h || es_ale_w);
+                     && ((data_sram_req && data_sram_addr_ok) || !es_mem_req || es_ale_h || es_ale_w)
+                     && !tlb_blk;
 
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go && ~es_flush_pipe;
@@ -401,6 +402,8 @@ assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // exception from exe, mem, w
 assign s1_vppn = es_tlb_op == `TLB_SRCH ? es_rkd_value[31:13] : tlb_ehi_rvalue[31:13];
 assign s1_asid = es_tlb_op == `TLB_SRCH ? es_rj_value[9:0] : tlb_asid_rvalue[9:0];
 assign s1_va_bit12 = 1'b0;
+
+assign tlb_blk = ms_tlb_blk && es_tlb_op == `TLB_SRCH;
 
 assign data_sram_size = ( es_load_op[2] || es_st_op[2] ) ? 2'd2 :
                         ( es_load_op[1] || es_load_op[4] || es_st_op[1] ) ? 2'd1 :
