@@ -100,12 +100,12 @@ assign ms_to_ws_bus = {ms_s1_index,
 
 //ms forward path
 wire ms_fwd_valid;
-wire ms_fwd_tlb;
+wire ms_tlb_block;
 
 assign ms_fwd_valid = ms_to_ws_valid && ms_gr_we;
-assign ms_fwd_tlb = ms_to_ws_valid 
+assign ms_tlb_block = ms_to_ws_valid 
                 && (ms_csr_we && (ms_csr_num == `CSR_ASID || ms_csr_num == `CSR_TLBEHI))
-                && (ms_tlb_op == `TLB_RD);
+                && (ms_tlb_op == `TLB_RD); //TODO
 
 assign ms_fwd_bus = {ms_csr_re && ms_to_ws_valid,
                      ms_fwd_valid   , //37:37

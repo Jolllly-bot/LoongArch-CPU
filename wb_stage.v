@@ -52,8 +52,8 @@ module wb_stage(
     input   [ 1:0] r_mat1,
     input          r_d1,
     input          r_v1,
-    output  [31:0] tlb_asid_rvalue,
-    output  [31:0] tlb_ehi_rvalue
+    output  [31:0] ws_asid_rvalue,
+    output  [31:0] ws_ehi_rvalue
 );
 
 reg         ws_valid;
@@ -90,6 +90,8 @@ wire  [31:0] wb_vaddr;
 wire  [ 4:0] ws_tlb_op;
 wire         ws_s1_found;
 wire         ws_s1_index;
+wire  [31:0] tlb_asid_rvalue;
+wire  [31:0] tlb_ehi_rvalue;
 
 assign ws_hw_int_in = 8'b0;
 assign ws_ipi_int_in = 1'b0;
@@ -208,6 +210,9 @@ assign w_plv1 = tlb_elo1_rvalue [3:2];
 assign w_mat1 = tlb_elo1_rvalue [5:4];
 assign w_d1 = tlb_elo1_rvalue [1];
 assign w_v1 = tlb_elo1_rvalue [0];
+
+assign ws_asid_rvalue = tlb_asid_rvalue;
+assign ws_ehi_rvalue = tlb_ehi_rvalue;
  
 always @(posedge clk)begin
     if(reset)begin

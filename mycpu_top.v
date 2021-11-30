@@ -394,13 +394,13 @@ wb_stage wb_stage(
     .r_mat1        (r_mat1         ),
     .r_d1          (r_d1           ),
     .r_v1          (r_v1           ),
-    .tlb_ehi_rvalue(tlb_ehi_rvalue ),
-    .tlb_asid_rvalue(tlb_asid_rvalue)
+    .ws_ehi_rvalue(tlb_ehi_rvalue ),
+    .ws_asid_rvalue(tlb_asid_rvalue)
 );
 
 // TLB
 tlb tlb(
-    .clk           (clk            ),
+    .clk           (aclk           ),
     // search port 0 (for fetch)
     .s0_vppn       (s0_vppn        ),
     .s0_va_bit12   (s0_va_bit12    ),
