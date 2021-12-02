@@ -33,14 +33,14 @@ module csr(
   output [31:0] tlb_elo0_rvalue,
   output [31:0] tlb_elo1_rvalue,
   output [31:0] tlb_asid_rvalue,
-  output [31:0] tlb_crmd_rvalue,
   output [31:0] tlb_dmw0_rvalue,
   output [31:0] tlb_dmw1_rvalue,
-  output [31:0] csr_estat_rvalue
+  output [31:0] csr_estat_rvalue,
+
+  output [31:0] csr_crmd_rvalue
 );
 
 //CRMD
-  wire [31:0] csr_crmd_rvalue;
   reg  [ 1:0] csr_crmd_plv;
   reg         csr_crmd_ie;
   reg         csr_crmd_da;

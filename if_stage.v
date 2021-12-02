@@ -35,7 +35,10 @@ module if_stage(
     input  [ 1:0] s0_plv,
     input  [ 1:0] s0_mat,
     input         s0_d,
-    input         s0_v
+    input         s0_v,
+    input  [31:0] tlb_asid_rvalue,
+    input  [31:0] csr_crmd_rvalue
+
 );
 wire        pre_fs_ready_go;
 reg         fs_valid;
@@ -54,22 +57,25 @@ assign {br_stall,
         br_target} = br_bus;
 
 reg         fs_inst_valid;
-reg  [31:0] fs_inst_r;
-wire [31:0] fs_inst;
-reg  [31:0] fs_pc;
+reg   [31:0] fs_inst_r;
+wire  [31:0] fs_inst;
+reg   [31:0] fs_pc;
+wire  [31:0] tlb_pa;
 
-assign fs_to_ds_bus = {fs_ex,
+
+
+assign fs_to_ds_bus = {fs_csr_ecode,
+                       fs_ex,
                        fs_inst ,
                        fs_pc   };
 
 // pre-IF stage
-wire fs_ex;
-wire fs_ex_adef;
-wire fs_ecode;
-
-
-assign fs_ex = fs_valid && fs_ex_adef;
-assign fs_ex_adef = nextpc[1] || nextpc[0];
+wire         fs_ex;
+wire         fs_ex_adef;
+wire         fs_ex_tlbr;
+wire         fs_ex_pif;
+wire         fs_ex_ppi;
+wire  [ 5:0] fs_csr_ecode;
 
 assign seq_pc       = fs_pc + 3'h4;
 assign nextpc       = fs_flush_pipe ? ws_to_fs_bus :
@@ -106,6 +112,26 @@ always @(posedge clk) begin
         pc_buffer <= 32'h0;
     end
 end
+
+
+assign fs_ex = fs_valid && fs_ex_adef && fs_ex_tlbr && fs_ex_pif && fs_ex_ppi;
+assign fs_ex_adef = nextpc[1] || nextpc[0];
+
+//------------TLB------------
+assign s0_vppn = nextpc[31:13];
+assign s0_va_bit12 = nextpc[12];
+assign s0_asid = tlb_asid_rvalue[`CSR_ASID_ASID];
+
+assign tlb_pa = (s0_ps == 6'd12) ? {s0_ppn, nextpc[11:0]} : {s0_ppn[9:0], nextpc[21:0]};
+assign fs_ex_tlbr = !s0_found && csr_crmd_rvalue[`CSR_CRMD_PG];
+assign fs_ex_pif = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s0_v;
+assign fs_ex_ppi = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s0_plv);
+assign fs_csr_ecode = fs_ex_adef? `ECODE_ADE
+                    : fs_ex_tlbr? `ECODE_TLBR
+                    : fs_ex_pif ? `ECODE_PIF
+                    : fs_ex_ppi ? `ECODE_PPI
+                    : 6'h0;
+
 
 // IF stage
 assign fs_ready_go    = ((fs_valid && inst_sram_data_ok) || fs_inst_valid ) && !cancel_r;

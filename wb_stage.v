@@ -56,7 +56,8 @@ module wb_stage(
     input          r_d1,
     input          r_v1,
     output  [31:0] ws_asid_rvalue,
-    output  [31:0] ws_ehi_rvalue
+    output  [31:0] ws_ehi_rvalue,
+    output  [31:0] ws_crmd_rvalue
 );
 
 reg         ws_valid;
@@ -104,10 +105,11 @@ wire [31: 0] tlb_asid_wvalue;
 wire [31: 0] tlb_idx_rvalue;
 wire [31: 0] tlb_elo0_rvalue;
 wire [31: 0] tlb_elo1_rvalue;
-wire [31: 0] tlb_crmd_rvalue;
 wire [31: 0] tlb_dmw0_rvalue;
 wire [31: 0] tlb_dmw1_rvalue;
+
 wire [31: 0] csr_estat_rvalue;
+wire [31: 0] csr_crmd_rvalue;
 
 reg  [ 4:0]  tlb_fill_index;
 wire         ws_refetch;
@@ -210,6 +212,7 @@ assign w_v1   = tlb_elo1_rvalue [0];
 
 assign ws_asid_rvalue = tlb_asid_rvalue;
 assign ws_ehi_rvalue = tlb_ehi_rvalue;
+assign ws_crmd_rvalue = csr_crmd_rvalue;
  
 always @(posedge clk)begin
     if(reset)begin
@@ -258,10 +261,10 @@ csr u_csr(
     .tlb_elo0_rvalue  (tlb_elo0_rvalue),
     .tlb_elo1_rvalue  (tlb_elo1_rvalue),
     .tlb_asid_rvalue  (tlb_asid_rvalue),
-    .tlb_crmd_rvalue  (tlb_crmd_rvalue),
     .tlb_dmw0_rvalue  (tlb_dmw0_rvalue),
     .tlb_dmw1_rvalue  (tlb_dmw1_rvalue),
-    .csr_estat_rvalue (csr_estat_rvalue)
+    .csr_estat_rvalue (csr_estat_rvalue),
+    .csr_crmd_rvalue  (csr_crmd_rvalue)
 );
 
 // debug info generate

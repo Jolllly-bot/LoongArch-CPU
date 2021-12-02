@@ -4,6 +4,7 @@ module tlb
 )
 (
     input clk,
+    input reset,
     // search port 0 (for fetch)
     input  [18:0] s0_vppn,
     input         s0_va_bit12,
@@ -119,7 +120,26 @@ module tlb
                             ||((invtlb_op==5'h6) & (inv_cond[i][1] | inv_cond[i][2]) & inv_cond[i][3]);
        
         always @(posedge clk )begin
-            if(we && w_index==i)begin
+            if (reset) begin
+                tlb_e    [i] <= 1'b0;
+                tlb_ps4MB[i] <= 1'b0;
+                tlb_vppn [i] <= 19'b0;
+                tlb_asid [i] <= 10'b0;
+                tlb_g    [i] <= 1'b0;
+                
+                tlb_ppn0 [i] <= 20'b0;
+                tlb_plv0 [i] <= 2'b0;
+                tlb_mat0 [i] <= 2'b0;
+                tlb_d0   [i] <= 1'b0;
+                tlb_v0   [i] <= 1'b0;
+                
+                tlb_ppn1 [i] <= 20'b0;
+                tlb_plv1 [i] <= 2'b0;
+                tlb_mat1 [i] <= 2'b0;
+                tlb_d1   [i] <= 1'b0;
+                tlb_v1   [i] <= 1'b0;
+            end
+            else if(we && w_index==i)begin
                 tlb_e    [i] <= w_e;
                 tlb_ps4MB[i] <= (w_ps==6'd22);
                 tlb_vppn [i] <= w_vppn;

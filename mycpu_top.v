@@ -158,6 +158,7 @@ wire         r_d1;
 wire         r_v1;
 wire  [31:0] tlb_asid_rvalue;
 wire  [31:0] tlb_ehi_rvalue;
+wire  [31:0] csr_crmd_rvalue;
 
 axi_bridge u_axi_bridge(
     .aclk           (aclk    ),
@@ -254,7 +255,9 @@ if_stage if_stage(
     .s0_plv        (s0_plv         ),
     .s0_mat        (s0_mat         ),
     .s0_d          (s0_d           ),
-    .s0_v          (s0_v           )
+    .s0_v          (s0_v           ),
+    .csr_crmd_rvalue(csr_crmd_rvalue),
+    .tlb_asid_rvalue(tlb_asid_rvalue)
 );
 // ID stage
 id_stage id_stage(
@@ -403,12 +406,14 @@ wb_stage wb_stage(
     .r_d1          (r_d1           ),
     .r_v1          (r_v1           ),
     .ws_ehi_rvalue(tlb_ehi_rvalue  ),
-    .ws_asid_rvalue(tlb_asid_rvalue)
+    .ws_asid_rvalue(tlb_asid_rvalue),
+    .ws_crmd_rvalue(csr_crmd_rvalue)
 );
 
 // TLB
 tlb tlb(
     .clk           (aclk           ),
+    .reset         (reset          ),
     // search port 0 (for fetch)
     .s0_vppn       (s0_vppn        ),
     .s0_va_bit12   (s0_va_bit12    ),
