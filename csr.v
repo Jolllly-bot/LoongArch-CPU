@@ -66,14 +66,14 @@ module csr(
         end
     end
     else if (csr_we && csr_num==`CSR_CRMD) begin
-        csr_crmd_plv <= csr_wmask[`CSR_CRMD_PLV]&csr_wvalue[`CSR_CRMD_PLV] 
-                     | ~csr_wmask[`CSR_CRMD_PLV]&csr_crmd_plv;
-        csr_crmd_ie <= csr_wmask[`CSR_CRMD_PIE]&csr_wvalue[`CSR_CRMD_PIE] 
-                     | ~csr_wmask[`CSR_CRMD_PIE]&csr_crmd_ie;
-        csr_crmd_da <= csr_wmask[`CSR_CRMD_DA]&csr_wvalue[`CSR_CRMD_DA] 
-                     | ~csr_wmask[`CSR_CRMD_DA]&csr_crmd_da;
-        csr_crmd_pg <= csr_wmask[`CSR_CRMD_PG]&csr_wvalue[`CSR_CRMD_PG] 
-                     | ~csr_wmask[`CSR_CRMD_PG]&csr_crmd_pg;
+        csr_crmd_plv <= csr_wmask[`CSR_CRMD_PLV] & csr_wvalue[`CSR_CRMD_PLV] 
+                     | ~csr_wmask[`CSR_CRMD_PLV] & csr_crmd_plv;
+        csr_crmd_ie <= csr_wmask[`CSR_CRMD_PIE] & csr_wvalue[`CSR_CRMD_PIE] 
+                     | ~csr_wmask[`CSR_CRMD_PIE] & csr_crmd_ie;
+        csr_crmd_da <= csr_wmask[`CSR_CRMD_DA] & csr_wvalue[`CSR_CRMD_DA] 
+                     | ~csr_wmask[`CSR_CRMD_DA] & csr_crmd_da;
+        csr_crmd_pg <= csr_wmask[`CSR_CRMD_PG] & csr_wvalue[`CSR_CRMD_PG] 
+                     | ~csr_wmask[`CSR_CRMD_PG] & csr_crmd_pg;
     end 
     else if (wb_ecode == `ECODE_TLBR) begin
         csr_crmd_da  <= 1'b1;
@@ -81,7 +81,7 @@ module csr(
     end
   end
 
-  assign csr_crmd_rvalue = {28'b0, csr_crmd_da, csr_crmd_ie, csr_crmd_plv};
+  assign csr_crmd_rvalue = {27'b0, csr_crmd_pg, csr_crmd_da, csr_crmd_ie, csr_crmd_plv};
 
 //PRMD
   wire [31:0] csr_prmd_rvalue;
