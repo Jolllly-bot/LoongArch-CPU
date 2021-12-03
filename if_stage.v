@@ -116,7 +116,8 @@ end
 
 
 assign fs_ex = fs_valid && (fs_ex_adef || fs_ex_tlbr || fs_ex_pif || fs_ex_ppi);
-assign fs_ex_adef = nextpc[1] || nextpc[0];
+assign fs_ex_adef = (nextpc[1] || nextpc[0])
+                ||  (nextpc[31] && csr_crmd_rvalue[`CSR_CRMD_PG]);
 
 
 //------------TLB------------
