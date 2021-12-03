@@ -45,7 +45,8 @@ module exe_stage(
     output         invtlb_valid,
     output  [ 4:0] invtlb_op,
     input   [31:0] tlb_asid_rvalue,
-    input   [31:0] tlb_ehi_rvalue
+    input   [31:0] tlb_ehi_rvalue,
+    input   [31:0] csr_crmd_rvalue
 );
 
 reg         es_valid      ;
@@ -110,6 +111,12 @@ wire [ 1:0] es_cnt_op;
 wire [ 4:0] es_tlb_op;
 wire        tlb_blk;
 wire        es_refetch;
+wire [31:0] tlb_pa;
+wire        es_ex_tlbr;
+wire        es_ex_pif;
+wire        es_ex_ppi;
+wire        es_ex_adem;
+wire [31:0] es_pa;
 
 assign {es_refetch,
         es_tlb_op   ,
@@ -394,23 +401,52 @@ assign es_st_strb = { 4{es_st_op[0]}} & (4'b0001 << es_vaddr_type)
 //---------Exception-------------
 assign es_ale_h = es_vaddr_type[0] && (es_load_op[1] || es_load_op[4] || es_st_op[1]);
 assign es_ale_w = es_vaddr_type && (es_load_op[2] || es_st_op[2]);
+assign es_ex_adem = es_mem_req && es_alu_result[31] && csr_crmd_rvalue[`CSR_CRMD_PG];
 
-assign es_csr_ecode = (es_ale_h || es_ale_w) ? `ECODE_ALE : ds_csr_ecode;
+assign es_csr_ecode = ds_to_es_ex ? ds_csr_ecode
+                    : (es_ale_h || es_ale_w) ? `ECODE_ALE
+                    : es_ex_adem  ? `ECODE_ADE 
+                    : es_ex_tlbr  ? `ECODE_TLBR
+                    : es_ex_pif   ? `ECODE_PIF
+                    : es_ex_ppi   ? `ECODE_PPI
+                    : 6'h0; 
+
 assign es_csr_num = (es_ale_h || es_ale_w) ? `CSR_EENTRY : ds_csr_num;
 assign es_csr_wvalue = es_rkd_value; 
 
 assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // exception from exe, mem, wb
 
-assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w) && es_valid; 
+assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w || es_ex_tlbr || es_ex_pif || es_ex_ppi || es_ex_adem) && es_valid; 
 
 //------------TLB------------------
-assign s1_vppn = es_tlb_op == `TLB_INV ? es_rkd_value[31:13] : tlb_ehi_rvalue[31:13];
+assign s1_vppn = (es_tlb_op != 5'b0) ? (es_tlb_op == `TLB_INV ? es_rkd_value[31:13] : tlb_ehi_rvalue[31:13])
+                                    : es_alu_result[31:13];
 assign s1_asid = es_tlb_op == `TLB_INV ? es_rj_value[9:0] : tlb_asid_rvalue[9:0];
-assign s1_va_bit12 = 1'b0;
+
+assign s1_va_bit12 =  (es_tlb_op != 5'b0) ? 1'b0 : es_alu_result[12];
 
 assign invtlb_valid = (es_tlb_op == `TLB_INV);
 
 assign tlb_blk = ms_tlb_blk && es_tlb_op == `TLB_SRCH;
+
+assign tlb_pa = (s1_ps == 6'd12) ? {s1_ppn, es_alu_result[11:0]} : {s1_ppn[9:0], es_alu_result[21:0]};
+
+assign es_ex_tlbr = !s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && es_mem_req;
+assign es_ex_pif = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s1_v && es_mem_req;
+assign es_ex_ppi = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s1_plv) && es_mem_req;
+
+assign es_pa = csr_crmd_rvalue[`CSR_CRMD_DA] ? es_alu_result : tlb_pa;
+
+/* 
+assign tlb_pa = (s0_ps == 6'd12) ? {s0_ppn, nextpc[11:0]} : {s0_ppn[9:0], nextpc[21:0]};
+assign fs_ex_tlbr = !s0_found && csr_crmd_rvalue[`CSR_CRMD_PG];
+assign fs_ex_pif = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s0_v;
+assign fs_ex_ppi = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s0_plv);
+assign fs_csr_ecode = fs_ex_adef? `ECODE_ADE
+                    : fs_ex_tlbr? `ECODE_TLBR
+                    : fs_ex_pif ? `ECODE_PIF
+                    : fs_ex_ppi ? `ECODE_PPI
+                    : 6'h0; */
 
 
 // data sram
@@ -426,10 +462,10 @@ always@(posedge clk) begin
         data_sram_process <= 1'b0;
     end
 end
-assign data_sram_req    = ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid && ms_allowin /* && ~data_sram_process */;
-assign data_sram_wr     =  es_mem_we && ~es_st_ex && ~es_flush_pipe;
+assign data_sram_req    = ~es_ex_adem && ~es_st_ex && (es_res_from_mem || es_mem_we) && es_valid && ms_allowin /* && ~data_sram_process */;
+assign data_sram_wr     =  ~es_ex_adem && es_mem_we && ~es_st_ex && ~es_flush_pipe;
 assign data_sram_wstrb  = (es_mem_we && ~es_st_ex && ~es_flush_pipe) ? es_st_strb : 4'h0;
-assign data_sram_addr   = es_alu_result;
+assign data_sram_addr   = es_pa;
 assign data_sram_wdata  = es_st_data;
 assign data_sram_size   = ( es_load_op[2] || es_st_op[2] ) ? 2'd2 :
                           ( es_load_op[1] || es_load_op[4] || es_st_op[1] ) ? 2'd1 :

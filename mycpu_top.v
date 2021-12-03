@@ -325,7 +325,8 @@ exe_stage exe_stage(
     .invtlb_op     (invtlb_op      ),
     .tlb_ehi_rvalue(tlb_ehi_rvalue ),
     .tlb_asid_rvalue(tlb_asid_rvalue),
-    .ms_tlb_blk    (ms_tlb_blk     )
+    .ms_tlb_blk     (ms_tlb_blk     ),
+    .csr_crmd_rvalue(csr_crmd_rvalue)
 );
 // MEM stage
 mem_stage mem_stage(

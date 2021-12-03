@@ -61,6 +61,7 @@ reg   [31:0] fs_inst_r;
 wire  [31:0] fs_inst;
 reg   [31:0] fs_pc;
 wire  [31:0] tlb_pa;
+wire  [31:0] fs_pa;
 
 
 
@@ -114,7 +115,7 @@ always @(posedge clk) begin
 end
 
 
-assign fs_ex = fs_valid && fs_ex_adef && fs_ex_tlbr && fs_ex_pif && fs_ex_ppi;
+assign fs_ex = fs_valid && (fs_ex_adef || fs_ex_tlbr || fs_ex_pif || fs_ex_ppi);
 assign fs_ex_adef = nextpc[1] || nextpc[0];
 
 //------------TLB------------
@@ -132,7 +133,7 @@ assign fs_csr_ecode = fs_ex_adef? `ECODE_ADE
                     : fs_ex_ppi ? `ECODE_PPI
                     : 6'h0;
 
-
+assign fs_pa = csr_crmd_rvalue[`CSR_CRMD_DA] ? nextpc : tlb_pa;
 // IF stage
 assign fs_ready_go    = ((fs_valid && inst_sram_data_ok) || fs_inst_valid ) && !cancel_r;
 assign fs_allowin     = !fs_valid || fs_ready_go && ds_allowin;
@@ -188,7 +189,7 @@ end
 assign inst_sram_req    = fs_allowin && !br_stall; //TODO: more complicated solution
 assign inst_sram_wr     = 1'b0;
 assign inst_sram_wstrb  = 4'h0;
-assign inst_sram_addr   = nextpc; 
+assign inst_sram_addr   = fs_pa; 
 assign inst_sram_wdata  = 32'b0;
 assign inst_sram_size   = 2'h2;
 

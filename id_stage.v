@@ -549,7 +549,7 @@ assign ds_csr_ecode = ds_has_int   ? `ECODE_INT
                     : inst_break   ? `ECODE_BRK
                     : 6'h0;
 
-assign ds_csr_esubcode = (fs_csr_ecode == `ECODE_ADE) ? `ESUBCODE_ADEF : 9'b0;
+assign ds_csr_esubcode = (fs_csr_ecode == `ECODE_ADE) ? `ESUBCODE_ADEF : 9'h31;
 assign ds_csr_re = inst_csrrd | inst_csrwr | inst_csrxchg | inst_rdcntid_w;
 assign ds_csr_we = inst_csrwr | inst_csrxchg;
 assign ds_csr_wmask = inst_csrxchg ? rj_value : {32{1'b1}};
