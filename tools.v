@@ -88,7 +88,7 @@ assign out = in[0] ? 4'd0
            : in[14]? 4'd14
            : in[15]? 4'd15
            : 4'd0;
-           
+
 endmodule
 
 

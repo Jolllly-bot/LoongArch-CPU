@@ -56,7 +56,7 @@ assign {br_stall,
         br_taken_cancel,
         br_target} = br_bus;
 
-reg         fs_inst_valid;
+reg          fs_inst_valid;
 reg   [31:0] fs_inst_r;
 wire  [31:0] fs_inst;
 reg   [31:0] fs_pc;
@@ -117,6 +117,7 @@ end
 
 assign fs_ex = fs_valid && (fs_ex_adef || fs_ex_tlbr || fs_ex_pif || fs_ex_ppi);
 assign fs_ex_adef = nextpc[1] || nextpc[0];
+
 
 //------------TLB------------
 assign s0_vppn = nextpc[31:13];

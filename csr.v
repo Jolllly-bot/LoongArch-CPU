@@ -174,11 +174,15 @@ module csr(
   wire wb_ex_addr_err;
   reg [31:0] csr_badv_vaddr;
 
-  assign wb_ex_addr_err = wb_ecode==`ECODE_ADE || wb_ecode==`ECODE_ALE;
+  assign wb_ex_addr_err = wb_ecode==`ECODE_ADE || wb_ecode==`ECODE_ALE || wb_ecode==`ECODE_TLBR || wb_ecode==`ECODE_PIF || wb_ecode==`ECODE_PIL || wb_ecode==`ECODE_PIS || wb_ecode==`ECODE_PPI || wb_ecode==`ECODE_PME ;
   
   always @(posedge clk) begin
     if (wb_ex && wb_ex_addr_err)
       csr_badv_vaddr <= (wb_ecode==`ECODE_ADE && wb_esubcode==`ESUBCODE_ADEF) ? wb_pc : wb_vaddr;
+    else if (csr_we && csr_num==`CSR_BADV)begin
+      csr_badv_vaddr <= csr_wmask & csr_wvalue 
+                     | ~csr_wmask & csr_badv_vaddr;      
+    end
   end
   
   assign csr_badv_rvalue = csr_badv_vaddr; 
@@ -426,6 +430,11 @@ reg [18:0] tlb_ehi_vppn;
 always @(posedge clk ) begin
     if(reset) begin
         tlb_ehi_vppn <= 19'b0;
+    end
+    else if(wb_ecode == `ECODE_TLBR || wb_ecode == `ECODE_PIL || wb_ecode == `ECODE_PIS ||
+            wb_ecode == `ECODE_PIF || wb_ecode == `ECODE_PPI || wb_ecode == `ECODE_PME)
+    begin
+        tlb_ehi_vppn <= wb_vaddr[`CSR_TLBEHI_VPPN];
     end
     else if(tlb_op == `TLB_RD && tlb_re) begin
         tlb_ehi_vppn <= tlb_ehi_wvalue[`CSR_TLBEHI_VPPN];
