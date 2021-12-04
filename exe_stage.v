@@ -113,6 +113,7 @@ wire        es_ale_w;
 wire [ 1:0] es_cnt_op;
 wire [ 4:0] es_tlb_op;
 wire        tlb_blk;
+wire        ds_to_es_refetch;
 wire        es_refetch;
 wire [31:0] tlb_pa;
 wire        es_ex_tlbr;
@@ -126,7 +127,7 @@ wire        dmw0_hit;
 wire        dmw1_hit;
 wire [31:0] dmw_pa;
 
-assign {es_refetch,
+assign {ds_to_es_refetch,
         es_tlb_op   ,
         invtlb_op   ,
         es_cnt_op,
@@ -160,7 +161,7 @@ assign {es_refetch,
        } = ds_to_es_bus_r;
 
 assign es_csr_esubcode = ((!ds_to_es_ex) && es_ex_adem) ? 9'h1 : ds_to_es_csr_esubcode;
-
+assign es_refetch = ds_to_es_refetch && !es_flush_pipe;
 assign es_to_ms_bus = {es_refetch  ,
                        es_tlb_op   ,
                        es_mem_req  ,
@@ -413,7 +414,7 @@ assign es_st_strb = { 4{es_st_op[0]}} & (4'b0001 << es_vaddr_type)
 //---------Exception-------------
 assign es_ale_h = es_vaddr_type[0] && (es_load_op[1] || es_load_op[4] || es_st_op[1]);
 assign es_ale_w = es_vaddr_type && (es_load_op[2] || es_st_op[2]);
-assign es_ex_adem = es_mem_req && es_alu_result[31] && csr_crmd_rvalue[`CSR_CRMD_PG];
+assign es_ex_adem = es_mem_req && es_alu_result[31] && csr_crmd_rvalue[`CSR_CRMD_PG] && !(dmw0_hit || dmw1_hit);
 
 assign es_csr_ecode = ds_to_es_ex ? ds_csr_ecode
                     : (es_ale_h || es_ale_w) ? `ECODE_ALE
@@ -449,11 +450,11 @@ assign tlb_blk = ms_tlb_blk && es_tlb_op == `TLB_SRCH;
 
 assign tlb_pa = (s1_ps == 6'd12) ? {s1_ppn, es_alu_result[11:0]} : {s1_ppn[9:0], es_alu_result[21:0]};
 
-assign es_ex_tlbr = !s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && es_mem_req;
-assign es_ex_pis = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s1_v && es_mem_we;
-assign es_ex_pil = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s1_v && es_res_from_mem;
-assign es_ex_pme = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && s1_v && es_mem_we && !s1_d && !(csr_crmd_rvalue[`CSR_CRMD_PLV] > s1_plv);
-assign es_ex_ppi = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && s1_v && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s1_plv) && es_mem_req;
+assign es_ex_tlbr = !s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && es_mem_req && !(dmw0_hit || dmw1_hit);
+assign es_ex_pis = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s1_v && es_mem_we && !(dmw0_hit || dmw1_hit);
+assign es_ex_pil = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s1_v && es_res_from_mem && !(dmw0_hit || dmw1_hit);
+assign es_ex_pme = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && s1_v && es_mem_we && !s1_d && !(csr_crmd_rvalue[`CSR_CRMD_PLV] > s1_plv) && !(dmw0_hit || dmw1_hit);
+assign es_ex_ppi = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && s1_v && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s1_plv) && es_mem_req && !(dmw0_hit || dmw1_hit);
 
 
 assign dmw0_hit = (csr_crmd_rvalue[`CSR_CRMD_PLV] == 2'd0 ? csr_dmw0_rvalue[`CSR_DMW_PLV0] : csr_dmw0_rvalue[`CSR_DMW_PLV3])
@@ -462,8 +463,9 @@ assign dmw0_hit = (csr_crmd_rvalue[`CSR_CRMD_PLV] == 2'd0 ? csr_dmw0_rvalue[`CSR
 assign dmw1_hit = (csr_crmd_rvalue[`CSR_CRMD_PLV] == 2'd0 ? csr_dmw1_rvalue[`CSR_DMW_PLV0] : csr_dmw1_rvalue[`CSR_DMW_PLV3])
                && (es_alu_result[31:29] == csr_dmw1_rvalue[`CSR_DMW_VSEG]);
 
-assign dmw_pa = {32{dmw0_hit}} && {csr_dmw0_rvalue[`CSR_DMW_PSEG], es_alu_result[28:0]}
-             || {32{dmw1_hit}} && {csr_dmw1_rvalue[`CSR_DMW_PSEG], es_alu_result[28:0]};
+assign dmw_pa = dmw0_hit ? {csr_dmw0_rvalue[`CSR_DMW_PSEG], es_alu_result[28:0]}
+              : dmw1_hit ? {csr_dmw1_rvalue[`CSR_DMW_PSEG], es_alu_result[28:0]}
+              : 32'b0;
 
 assign es_pa = csr_crmd_rvalue[`CSR_CRMD_DA] ? es_alu_result : (dmw0_hit || dmw1_hit) ? dmw_pa : tlb_pa;
 

@@ -336,7 +336,7 @@ always @(posedge clk ) begin
         tlb_dmw1_pseg <= 3'b0;
         tlb_dmw1_vseg <= 3'b0;
     end
-    else if(csr_we && csr_num == `CSR_DMW0)begin
+    else if(csr_we && csr_num == `CSR_DMW1)begin
         tlb_dmw1_plv0  <= csr_wmask[`CSR_DMW_PLV0] & csr_wvalue[`CSR_DMW_PLV0]
                        | ~csr_wmask[`CSR_DMW_PLV0] & tlb_dmw1_plv0; 
         tlb_dmw1_plv3  <= csr_wmask[`CSR_DMW_PLV3] & csr_wvalue[`CSR_DMW_PLV3]

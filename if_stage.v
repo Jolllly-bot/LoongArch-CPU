@@ -131,9 +131,9 @@ assign s0_va_bit12 = nextpc[12];
 assign s0_asid = tlb_asid_rvalue[`CSR_ASID_ASID];
 
 assign tlb_pa = (s0_ps == 6'd12) ? {s0_ppn, nextpc[11:0]} : {s0_ppn[9:0], nextpc[21:0]};
-assign fs_ex_tlbr = !s0_found && csr_crmd_rvalue[`CSR_CRMD_PG];
-assign fs_ex_pif = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s0_v;
-assign fs_ex_ppi = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s0_plv);
+assign fs_ex_tlbr = !s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !(dmw0_hit || dmw1_hit);
+assign fs_ex_pif = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s0_v && !(dmw0_hit || dmw1_hit);
+assign fs_ex_ppi = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s0_plv) && !(dmw0_hit || dmw1_hit);
 assign fs_csr_ecode = fs_ex_adef? `ECODE_ADE
                     : fs_ex_tlbr? `ECODE_TLBR
                     : fs_ex_pif ? `ECODE_PIF
