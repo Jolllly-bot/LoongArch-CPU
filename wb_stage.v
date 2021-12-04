@@ -178,7 +178,7 @@ assign ws_coreid_in = 32'b0;
 
 
 assign ws_flush_pipe = (ws_ex || eret_flush || ws_refetch) && ws_valid;
-assign ws_to_fs_bus = ws_refetch ? ws_pc : ws_csr_rvalue;
+assign ws_to_fs_bus = ws_refetch ? ws_pc+4 : ws_csr_rvalue;
 
 
 //---------------TLB-------------------

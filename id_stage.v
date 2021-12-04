@@ -562,7 +562,7 @@ assign csr_refetch = ds_csr_we &&
                     (ds_csr_num == `CSR_CRMD && (ds_csr_wmask[`CSR_CRMD_DA] || ds_csr_wmask[`CSR_CRMD_PG])
                   || ds_csr_num == `CSR_DMW0 || ds_csr_num == `CSR_DMW1 || ds_csr_num == `CSR_ASID);
 
-reg         ds_refetch;
+/* reg         ds_refetch;
 always @(posedge clk) begin
     if (reset) begin
         ds_refetch <= 1'b0;
@@ -573,6 +573,8 @@ always @(posedge clk) begin
     else if (ds_valid && ds_allowin && (inst_tlb_rd || inst_tlb_fill || inst_tlb_wr || inst_invtlb || csr_refetch)) begin
         ds_refetch <= 1'b1;
     end
-end
+end */
+wire ds_refetch;
+assign ds_refetch = !ds_flush_pipe && ds_valid && (inst_tlb_rd || inst_tlb_fill || inst_tlb_wr || inst_invtlb || csr_refetch) ;
 
 endmodule
