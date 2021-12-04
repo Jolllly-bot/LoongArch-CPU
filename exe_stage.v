@@ -46,7 +46,9 @@ module exe_stage(
     output  [ 4:0] invtlb_op,
     input   [31:0] tlb_asid_rvalue,
     input   [31:0] tlb_ehi_rvalue,
-    input   [31:0] csr_crmd_rvalue
+    input   [31:0] csr_crmd_rvalue,
+    input   [31:0] csr_dmw0_rvalue,
+    input   [31:0] csr_dmw1_rvalue
 );
 
 reg         es_valid      ;
@@ -120,6 +122,9 @@ wire        es_ex_pme;
 wire        es_ex_ppi;
 wire        es_ex_adem;
 wire [31:0] es_pa;
+wire        dmw0_hit;
+wire        dmw1_hit;
+wire [31:0] dmw_pa;
 
 assign {es_refetch,
         es_tlb_op   ,
@@ -450,19 +455,17 @@ assign es_ex_pil = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s1_v && es_res_
 assign es_ex_pme = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && s1_v && es_mem_we && !s1_d && !(csr_crmd_rvalue[`CSR_CRMD_PLV] > s1_plv);
 assign es_ex_ppi = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && s1_v && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s1_plv) && es_mem_req;
 
-assign es_pa = csr_crmd_rvalue[`CSR_CRMD_DA] ? es_alu_result : tlb_pa;
 
-/* 
-assign tlb_pa = (s0_ps == 6'd12) ? {s0_ppn, nextpc[11:0]} : {s0_ppn[9:0], nextpc[21:0]};
-assign fs_ex_tlbr = !s0_found && csr_crmd_rvalue[`CSR_CRMD_PG];
-assign fs_ex_pif = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s0_v;
-assign fs_ex_ppi = s0_found && csr_crmd_rvalue[`CSR_CRMD_PG] && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s0_plv);
-assign fs_csr_ecode = fs_ex_adef? `ECODE_ADE
-                    : fs_ex_tlbr? `ECODE_TLBR
-                    : fs_ex_pif ? `ECODE_PIF
-                    : fs_ex_ppi ? `ECODE_PPI
-                    : 6'h0; */
+assign dmw0_hit = (csr_crmd_rvalue[`CSR_CRMD_PLV] == 2'd0 ? csr_dmw0_rvalue[`CSR_DMW_PLV0] : csr_dmw0_rvalue[`CSR_DMW_PLV3])
+               && (es_alu_result[31:29] == csr_dmw0_rvalue[`CSR_DMW_VSEG]);
 
+assign dmw1_hit = (csr_crmd_rvalue[`CSR_CRMD_PLV] == 2'd0 ? csr_dmw1_rvalue[`CSR_DMW_PLV0] : csr_dmw1_rvalue[`CSR_DMW_PLV3])
+               && (es_alu_result[31:29] == csr_dmw1_rvalue[`CSR_DMW_VSEG]);
+
+assign dmw_pa = {32{dmw0_hit}} && {csr_dmw0_rvalue[`CSR_DMW_PSEG], es_alu_result[28:0]}
+             || {32{dmw1_hit}} && {csr_dmw1_rvalue[`CSR_DMW_PSEG], es_alu_result[28:0]};
+
+assign es_pa = csr_crmd_rvalue[`CSR_CRMD_DA] ? es_alu_result : (dmw0_hit || dmw1_hit) ? dmw_pa : tlb_pa;
 
 // data sram
 reg data_sram_process;

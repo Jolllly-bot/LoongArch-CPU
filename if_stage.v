@@ -37,7 +37,9 @@ module if_stage(
     input         s0_d,
     input         s0_v,
     input  [31:0] tlb_asid_rvalue,
-    input  [31:0] csr_crmd_rvalue
+    input  [31:0] csr_crmd_rvalue,
+    input  [31:0] csr_dmw0_rvalue,
+    input  [31:0] csr_dmw1_rvalue
 
 );
 wire        pre_fs_ready_go;
@@ -77,6 +79,9 @@ wire         fs_ex_tlbr;
 wire         fs_ex_pif;
 wire         fs_ex_ppi;
 wire  [ 5:0] fs_csr_ecode;
+wire         dmw0_hit;
+wire         dmw1_hit;
+wire  [31:0] dmw_pa;
 
 assign seq_pc       = fs_pc + 3'h4;
 assign nextpc       = fs_flush_pipe ? ws_to_fs_bus :
@@ -135,7 +140,17 @@ assign fs_csr_ecode = fs_ex_adef? `ECODE_ADE
                     : fs_ex_ppi ? `ECODE_PPI
                     : 6'h0;
 
-assign fs_pa = csr_crmd_rvalue[`CSR_CRMD_DA] ? nextpc : tlb_pa;
+assign dmw0_hit = (csr_crmd_rvalue[`CSR_CRMD_PLV] == 2'd0 ? csr_dmw0_rvalue[`CSR_DMW_PLV0] : csr_dmw0_rvalue[`CSR_DMW_PLV3])
+               && (nextpc[31:29] == csr_dmw0_rvalue[`CSR_DMW_VSEG]);
+
+assign dmw1_hit = (csr_crmd_rvalue[`CSR_CRMD_PLV] == 2'd0 ? csr_dmw1_rvalue[`CSR_DMW_PLV0] : csr_dmw1_rvalue[`CSR_DMW_PLV3])
+               && (nextpc[31:29] == csr_dmw1_rvalue[`CSR_DMW_VSEG]);
+
+assign dmw_pa = {32{dmw0_hit}} && {csr_dmw0_rvalue[`CSR_DMW_PSEG], nextpc[28:0]}
+             || {32{dmw1_hit}} && {csr_dmw1_rvalue[`CSR_DMW_PSEG], nextpc[28:0]};
+
+assign fs_pa = csr_crmd_rvalue[`CSR_CRMD_DA] ? nextpc : (dmw0_hit || dmw1_hit) ? dmw_pa : tlb_pa;
+
 // IF stage
 assign fs_ready_go    = ((fs_valid && inst_sram_data_ok) || fs_inst_valid ) && !cancel_r;
 assign fs_allowin     = !fs_valid || fs_ready_go && ds_allowin;
@@ -155,7 +170,7 @@ always @(posedge clk) begin
         fs_pc <= 32'h1bfffffc;  //trick: to make nextpc be 0x1c000000 during reset 
     end
     else if (to_fs_valid && fs_allowin) begin
-        fs_pc <= nextpc;
+        fs_pc <= fs_pa;
     end
 
      if (reset) begin

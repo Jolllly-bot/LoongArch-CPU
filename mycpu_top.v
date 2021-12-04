@@ -159,6 +159,8 @@ wire         r_v1;
 wire  [31:0] tlb_asid_rvalue;
 wire  [31:0] tlb_ehi_rvalue;
 wire  [31:0] csr_crmd_rvalue;
+wire  [31:0] csr_dmw0_rvalue;
+wire  [31:0] csr_dmw1_rvalue;
 
 axi_bridge u_axi_bridge(
     .aclk           (aclk    ),
@@ -257,7 +259,9 @@ if_stage if_stage(
     .s0_d          (s0_d           ),
     .s0_v          (s0_v           ),
     .csr_crmd_rvalue(csr_crmd_rvalue),
-    .tlb_asid_rvalue(tlb_asid_rvalue)
+    .tlb_asid_rvalue(tlb_asid_rvalue),
+    .csr_dmw0_rvalue(csr_dmw0_rvalue),
+    .csr_dmw1_rvalue(csr_dmw1_rvalue)
 );
 // ID stage
 id_stage id_stage(
@@ -326,7 +330,9 @@ exe_stage exe_stage(
     .tlb_ehi_rvalue(tlb_ehi_rvalue ),
     .tlb_asid_rvalue(tlb_asid_rvalue),
     .ms_tlb_blk     (ms_tlb_blk     ),
-    .csr_crmd_rvalue(csr_crmd_rvalue)
+    .csr_crmd_rvalue(csr_crmd_rvalue),
+    .csr_dmw0_rvalue(csr_dmw0_rvalue),
+    .csr_dmw1_rvalue(csr_dmw1_rvalue)
 );
 // MEM stage
 mem_stage mem_stage(
@@ -408,7 +414,9 @@ wb_stage wb_stage(
     .r_v1          (r_v1           ),
     .ws_ehi_rvalue(tlb_ehi_rvalue  ),
     .ws_asid_rvalue(tlb_asid_rvalue),
-    .ws_crmd_rvalue(csr_crmd_rvalue)
+    .ws_crmd_rvalue(csr_crmd_rvalue),
+    .ws_dmw0_rvalue(csr_dmw0_rvalue),
+    .ws_dmw1_rvalue(csr_dmw1_rvalue)
 );
 
 // TLB

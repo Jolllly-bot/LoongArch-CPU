@@ -212,6 +212,7 @@ wire [1:0]  cnt_op;
 
 wire [4:0]  tlb_op;
 wire [4:0]  invtlb_op;
+wire        csr_refetch;
 
 assign ds_to_es_bus = {ds_refetch  ,
                        tlb_op      ,
@@ -557,6 +558,9 @@ assign ds_csr_wmask = inst_csrxchg ? rj_value : {32{1'b1}};
 //-----------------TLB----------------------
 assign tlb_op    = {inst_invtlb, inst_tlb_fill, inst_tlb_wr, inst_tlb_rd, inst_tlb_srch};
 assign invtlb_op = inst_invtlb ? ds_inst[4:0] : 5'b0;
+assign csr_refetch = ds_csr_we &&
+                    (ds_csr_num == `CSR_CRMD && (ds_csr_wmask[`CSR_CRMD_DA] || ds_csr_wmask[`CSR_CRMD_PG])
+                  || ds_csr_num == `CSR_DMW0 || ds_csr_num == `CSR_DMW1 || ds_csr_num == `CSR_ASID);
 
 reg         ds_refetch;
 always @(posedge clk) begin
@@ -566,7 +570,7 @@ always @(posedge clk) begin
     else if (ds_flush_pipe) begin
         ds_refetch <= 1'b0;
     end
-    else if (ds_valid && ds_allowin && (inst_tlb_rd || inst_tlb_fill || inst_tlb_wr || inst_invtlb)) begin
+    else if (ds_valid && ds_allowin && (inst_tlb_rd || inst_tlb_fill || inst_tlb_wr || inst_invtlb || csr_refetch)) begin
         ds_refetch <= 1'b1;
     end
 end

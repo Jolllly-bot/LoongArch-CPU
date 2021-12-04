@@ -57,7 +57,9 @@ module wb_stage(
     input          r_v1,
     output  [31:0] ws_asid_rvalue,
     output  [31:0] ws_ehi_rvalue,
-    output  [31:0] ws_crmd_rvalue
+    output  [31:0] ws_crmd_rvalue,
+    output  [31:0] ws_dmw0_rvalue,
+    output  [31:0] ws_dmw1_rvalue
 );
 
 reg         ws_valid;
@@ -176,7 +178,7 @@ assign ws_coreid_in = 32'b0;
 
 
 assign ws_flush_pipe = (ws_ex || eret_flush || ws_refetch) && ws_valid;
-assign ws_to_fs_bus = ws_refetch ? ws_pc + 4 : ws_csr_rvalue;
+assign ws_to_fs_bus = ws_refetch ? ws_pc : ws_csr_rvalue;
 
 
 //---------------TLB-------------------
@@ -213,6 +215,8 @@ assign w_v1   = tlb_elo1_rvalue [0];
 assign ws_asid_rvalue = tlb_asid_rvalue;
 assign ws_ehi_rvalue = tlb_ehi_rvalue;
 assign ws_crmd_rvalue = csr_crmd_rvalue;
+assign ws_dmw0_rvalue = tlb_dmw0_rvalue;
+assign ws_dmw1_rvalue = tlb_dmw1_rvalue;
  
 always @(posedge clk)begin
     if(reset)begin
