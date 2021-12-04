@@ -161,7 +161,7 @@ assign {ds_to_es_refetch,
        } = ds_to_es_bus_r;
 
 assign es_csr_esubcode = ((!ds_to_es_ex) && es_ex_adem) ? 9'h1 : ds_to_es_csr_esubcode;
-assign es_refetch = ds_to_es_refetch && !es_flush_pipe;
+assign es_refetch = ds_to_es_refetch;
 assign es_to_ms_bus = {s1_found    ,
                        s1_index    ,
                        es_refetch  ,
@@ -216,7 +216,7 @@ assign es_ready_go    = (es_flush_pipe || es_div_valid)
                      && !tlb_blk;
 
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
-assign es_to_ms_valid =  es_valid && es_ready_go && ~es_flush_pipe;
+assign es_to_ms_valid =  es_valid && es_ready_go && ~es_flush_pipe ;
 always @(posedge clk) begin
     if (reset) begin     
         es_valid <= 1'b0;
@@ -440,8 +440,10 @@ assign es_st_ex = es_ex || ms_ex || es_flush_pipe; // exception from exe, mem, w
 assign es_ex = (ds_to_es_ex || es_ale_h || es_ale_w || es_ex_tlbr || es_ex_pis || es_ex_pil || es_ex_pme || es_ex_ppi || es_ex_adem) && es_valid; 
 
 //------------TLB------------------
-assign s1_vppn = (es_tlb_op != 5'b0) ? (es_tlb_op == `TLB_INV ? es_rkd_value[31:13] : tlb_ehi_rvalue[31:13])
+assign s1_vppn = (es_tlb_op != 5'b0) ? 
+                 (es_tlb_op == `TLB_INV ? es_rkd_value[31:13] : tlb_ehi_rvalue[31:13])
                                     : es_alu_result[31:13];
+
 assign s1_asid = es_tlb_op == `TLB_INV ? es_rj_value[9:0] : tlb_asid_rvalue[9:0];
 
 assign s1_va_bit12 =  (es_tlb_op != 5'b0) ? 1'b0 : es_alu_result[12];

@@ -114,6 +114,7 @@ reg  [ 4:0]  tlb_fill_index;
 wire         ws_refetch;
 wire         ws_s1_found;
 wire [ 3:0]  ws_s1_index;
+wire         tlb_idx_ne;
 
 assign {ws_s1_found,
         ws_s1_index,
@@ -167,7 +168,7 @@ end
 
 assign rf_wdata = ws_csr_re ? ws_csr_rvalue : ws_final_result;
 assign rf_waddr = ws_dest;
-assign rf_we    = (ws_gr_we || ws_csr_re) && ws_valid && ~ws_ex;
+assign rf_we    = (ws_gr_we || ws_csr_re) && ws_valid && ~ws_ex && ~ws_refetch;
 
 //--------------Exception----------------
 assign ws_ex = ms_to_ws_ex && ws_valid;
@@ -179,13 +180,14 @@ assign ws_coreid_in = 32'b0;
 
 
 assign ws_flush_pipe = (ws_ex || eret_flush || ws_refetch) && ws_valid;
-assign ws_to_fs_bus = ws_refetch ? ws_pc+4 : ws_csr_rvalue;
+assign ws_to_fs_bus = ws_refetch ? ws_pc : ws_csr_rvalue;
 
 
 //---------------TLB-------------------
 assign tlb_hit         = (ws_tlb_op == `TLB_SRCH) && ws_s1_found; 
 assign tlb_re          = r_e && ws_valid;
-assign tlb_idx_wvalue  = {~ws_s1_found || ~r_e, 1'b0, r_ps, 20'b0, ws_s1_index};
+assign tlb_idx_ne = (ws_tlb_op == `TLB_SRCH && ~ws_s1_found) || (ws_tlb_op == `TLB_RD && ~r_e);
+assign tlb_idx_wvalue  = {tlb_idx_ne, 1'b0, r_ps, 20'b0, ws_s1_index};
 assign tlb_ehi_wvalue  = {r_vppn,13'b0};
 assign tlb_elo0_wvalue = {r_ppn0, 1'b0, r_g, r_mat0, r_plv0, r_d0, r_v0};
 assign tlb_elo1_wvalue = {r_ppn1, 1'b0, r_g, r_mat1, r_plv1, r_d1, r_v1};

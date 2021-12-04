@@ -92,7 +92,7 @@ assign {ms_s1_found,
 
 assign ms_ex = es_to_ms_ex && ms_to_ws_valid; 
 assign ms_to_es_ex = (es_to_ms_ex || ms_ertn) && ms_to_ws_valid;
-assign ms_refetch = es_to_ms_refetch && !ms_flush_pipe;
+assign ms_refetch = es_to_ms_refetch;
 assign ms_to_ws_bus = {ms_s1_found  ,
                        ms_s1_index  ,
                        ms_refetch   ,
