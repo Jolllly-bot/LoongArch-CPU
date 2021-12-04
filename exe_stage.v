@@ -162,7 +162,9 @@ assign {ds_to_es_refetch,
 
 assign es_csr_esubcode = ((!ds_to_es_ex) && es_ex_adem) ? 9'h1 : ds_to_es_csr_esubcode;
 assign es_refetch = ds_to_es_refetch && !es_flush_pipe;
-assign es_to_ms_bus = {es_refetch  ,
+assign es_to_ms_bus = {s1_found    ,
+                       s1_index    ,
+                       es_refetch  ,
                        es_tlb_op   ,
                        es_mem_req  ,
                        es_vaddr    ,

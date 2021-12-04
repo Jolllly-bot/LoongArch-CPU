@@ -374,9 +374,6 @@ wb_stage wb_stage(
     .debug_wb_rf_wdata(debug_wb_rf_wdata),
     .ws_to_fs_bus     (ws_to_fs_bus     ),
     .ws_flush_pipe    (ws_flush_pipe    ),
-    // search port
-    .s1_found      (s1_found       ),
-    .s1_index      (s1_index       ),
     // write port
     .we            (we             ), //w(rite) e(nable)
     .w_index       (w_index        ),

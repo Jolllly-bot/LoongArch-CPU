@@ -63,8 +63,12 @@ wire        ms_mem_req;
 wire [ 4:0] ms_tlb_op;
 wire        es_to_ms_refetch;
 wire        ms_refetch;
+wire        ms_s1_found;
+wire [ 3:0] ms_s1_index;
 
-assign {es_to_ms_refetch ,
+assign {ms_s1_found,
+        ms_s1_index,
+        es_to_ms_refetch ,
         ms_tlb_op  ,
         ms_mem_req ,
         ms_vaddr,
@@ -89,7 +93,9 @@ assign {es_to_ms_refetch ,
 assign ms_ex = es_to_ms_ex && ms_to_ws_valid; 
 assign ms_to_es_ex = (es_to_ms_ex || ms_ertn) && ms_to_ws_valid;
 assign ms_refetch = es_to_ms_refetch && !ms_flush_pipe;
-assign ms_to_ws_bus = {ms_refetch  ,
+assign ms_to_ws_bus = {ms_s1_found  ,
+                       ms_s1_index  ,
+                       ms_refetch   ,
                        ms_tlb_op,
                        ms_vaddr,
                        ms_csr_esubcode,
