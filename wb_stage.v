@@ -186,8 +186,7 @@ assign ws_to_fs_bus = ws_refetch ? ws_pc : ws_csr_rvalue;
 //---------------TLB-------------------
 assign tlb_hit         = (ws_tlb_op == `TLB_SRCH) && ws_s1_found; 
 assign tlb_re          = r_e && ws_valid;
-assign tlb_idx_ne = (ws_tlb_op == `TLB_SRCH && ~ws_s1_found) || (ws_tlb_op == `TLB_RD && ~r_e);
-assign tlb_idx_wvalue  = {tlb_idx_ne, 1'b0, r_ps, 20'b0, ws_s1_index};
+assign tlb_idx_wvalue  = {~r_e, 1'b0, r_ps, 20'b0, ws_s1_index};
 assign tlb_ehi_wvalue  = {r_vppn,13'b0};
 assign tlb_elo0_wvalue = {r_ppn0, 1'b0, r_g, r_mat0, r_plv0, r_d0, r_v0};
 assign tlb_elo1_wvalue = {r_ppn1, 1'b0, r_g, r_mat1, r_plv1, r_d1, r_v1};

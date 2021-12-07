@@ -458,8 +458,8 @@ assign es_ex_tlbr = !s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && es_mem_req && 
 assign es_ex_pis = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s1_v && es_mem_we && !(dmw0_hit || dmw1_hit);
 assign es_ex_pil = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && !s1_v && es_res_from_mem && !(dmw0_hit || dmw1_hit);
 assign es_ex_pme = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && s1_v && es_mem_we && !s1_d && !(csr_crmd_rvalue[`CSR_CRMD_PLV] > s1_plv) && !(dmw0_hit || dmw1_hit);
-assign es_ex_ppi = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && s1_v && (csr_crmd_rvalue[`CSR_CRMD_PLV] > s1_plv) && es_mem_req && !(dmw0_hit || dmw1_hit);
-
+assign es_ex_ppi = s1_found && csr_crmd_rvalue[`CSR_CRMD_PG] && s1_v 
+&& (csr_crmd_rvalue[`CSR_CRMD_PLV]==3'd3 && s1_plv==3'd0) && es_mem_req && !(dmw0_hit || dmw1_hit);
 
 assign dmw0_hit = (csr_crmd_rvalue[`CSR_CRMD_PLV] == 2'd0 ? csr_dmw0_rvalue[`CSR_DMW_PLV0] : csr_dmw0_rvalue[`CSR_DMW_PLV3])
                && (es_alu_result[31:29] == csr_dmw0_rvalue[`CSR_DMW_VSEG]);
